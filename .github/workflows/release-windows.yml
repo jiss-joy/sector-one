@@ -1,0 +1,33 @@
+name: Windows exe
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: src/go.mod
+          cache-dependency-path: src/go.sum
+
+      - name: Build Windows exe
+        working-directory: src
+        run: GOOS=windows GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o sector-one.exe ./cmd/engine
+
+      - name: Publish latest release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: latest
+          body: Windows build from ${{ github.sha }}
+          files: src/sector-one.exe
+          fail_on_unmatched_files: true
+          make_latest: true
