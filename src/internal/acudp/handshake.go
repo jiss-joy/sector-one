@@ -42,7 +42,7 @@ func ParseHandshakeResponse(data []byte) (SessionInfo, error) {
 		return zero, fmt.Errorf("handshake response: want 408 or 808 bytes, got %d", len(data))
 	}
 
-	// Four UTF-16LE strings + two int32s. N is wchar count per name.
+	// Four UTF-16LE strings + two int32s. n is bytes per name field.
 	n := (len(data) - 8) / 4
 	carEnd := n
 	drvEnd := 2 * n

@@ -1,72 +1,154 @@
 package main
 
 import (
-	"flag"
+	"context"
 	"fmt"
 	"log"
 	"net"
 	"os"
-	"time"
-
+	"os/signal"
 	"sector-one/internal/acudp"
+	"syscall"
+	"time"
+)
+
+const (
+	retryEvery    = 2 * time.Second
+	carPacketSize = 328
 )
 
 func main() {
-	host := flag.String("ac-host", "127.0.0.1", "Assetto Corsa host")
-	port := flag.Int("ac-port", 9996, "Assetto Corsa UDP port")
-	flag.Parse()
+	host := "127.0.0.1"
+	port := 9996
 
-	addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", *host, *port))
+	addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", host, port))
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Println("Assetto Corsa address:", addr)
 
-	// UDP has no real connection. This just binds a local port and
-	// remembers that AC lives at addr, so Write/Read have a default peer.
-	conn, err := net.DialUDP("udp", nil, addr)
-	if err != nil {
-		log.Fatal(err)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
+
+	for {
+		if ctx.Err() != nil {
+			return
+		}
+		conn, err := net.DialUDP("udp", nil, addr)
+		if err != nil {
+			log.Println("error dialing UDP: ", err)
+			if err := sleep(ctx, retryEvery); err != nil {
+				return
+			}
+			continue
+		}
+		fmt.Println("local socket: ", conn.LocalAddr())
+
+		packet := acudp.EncodeHandshake(acudp.OpHandshake)
+		n, err := conn.Write(packet)
+		if err != nil {
+			_ = conn.Close()
+			log.Println("error sending handshake packet: ", err)
+			if err := sleep(ctx, retryEvery); err != nil {
+				return
+			}
+			continue
+		}
+		fmt.Println("sent handshake packet: ", n, "bytes")
+		if err := conn.SetReadDeadline(time.Now().Add(5 * time.Second)); err != nil {
+			_ = conn.Close()
+			log.Println("error setting read deadline: ", err)
+			if err := sleep(ctx, retryEvery); err != nil {
+				return
+			}
+			continue
+		}
+		buf := make([]byte, 1024)
+		n, err = conn.Read(buf)
+		if err != nil {
+			_ = conn.Close()
+			log.Println("waiting for a session (Content Manager home is fine)")
+			if err := sleep(ctx, retryEvery); err != nil {
+				return
+			}
+			continue
+		}
+
+		fmt.Println("got handshake reply: ", n, "bytes")
+		// Parse the handshake response
+		session, err := acudp.ParseHandshakeResponse(buf[:n])
+		if err != nil {
+			_ = conn.Close()
+			log.Println("error parsing handshake response: ", err)
+			if err := sleep(ctx, retryEvery); err != nil {
+				return
+			}
+			continue
+		}
+		fmt.Printf("car=%q driver=%q track=%q config=%q\n",
+			session.CarName, session.DriverName, session.TrackName, session.TrackConfig)
+
+		// Subscribe to updates (AC will send 328 byte packets to conn)
+		n, err = conn.Write(acudp.EncodeHandshake(acudp.OpSubscribeUpdate))
+		if err != nil {
+			_ = conn.Close()
+			log.Println("error sending subscribe update packet: ", err)
+			if err := sleep(ctx, retryEvery); err != nil {
+				return
+			}
+			continue
+		}
+		fmt.Println("sent subscribe update packet: ", n, "bytes")
+
+		lastLog := time.Time{}
+		quit := false
+		for {
+			if ctx.Err() != nil {
+				quit = true
+				break
+			}
+			if err := conn.SetReadDeadline(time.Now().Add(5 * time.Second)); err != nil {
+				log.Println("error setting read deadline: ", err)
+				break
+			}
+			n, err = conn.Read(buf)
+			if err != nil {
+				if ctx.Err() != nil {
+					quit = true
+					break
+				}
+				log.Println("session ended: ", err)
+				break
+			}
+			if n != carPacketSize {
+				log.Printf("skipping packet: got %d bytes, want %d", n, carPacketSize)
+				continue
+			}
+			if time.Since(lastLog) > 2*time.Second {
+				fmt.Println("car packet: ", n, "bytes")
+				lastLog = time.Now()
+			}
+		}
+		dismiss(conn)
+		_ = conn.Close()
+		if quit {
+			return
+		}
 	}
-	defer conn.Close()
-
-	if err := handshakeAndSubscribe(conn); err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println("subscribed — AC will now push 328-byte packets to this socket")
-	fmt.Println("next step (you write this): Read() in a loop and parse RTCarInfo")
 }
 
-func handshakeAndSubscribe(conn *net.UDPConn) error {
-	// 1) Ask AC who is driving / which track.
-	if err := conn.SetReadDeadline(time.Now().Add(5 * time.Second)); err != nil {
-		return err
-	}
-	if _, err := conn.Write(acudp.EncodeHandshake(acudp.OpHandshake)); err != nil {
-		return fmt.Errorf("send handshake: %w", err)
-	}
+func dismiss(conn *net.UDPConn) {
+	_ = conn.SetWriteDeadline(time.Now().Add(time.Second))
+	_, _ = conn.Write(acudp.EncodeHandshake(acudp.OpDismiss))
+}
 
-	buf := make([]byte, 1024)
-	n, err := conn.Read(buf)
-	if err != nil {
-		if os.IsTimeout(err) {
-			return fmt.Errorf("AC did not answer on %s — is the 2014 game in a session (not the menu)?", conn.RemoteAddr())
-		}
-		return fmt.Errorf("read handshake: %w", err)
+func sleep(ctx context.Context, duration time.Duration) error {
+	t := time.NewTimer(duration)
+	defer t.Stop()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-t.C:
+		return nil
 	}
-
-	session, err := acudp.ParseHandshakeResponse(buf[:n])
-	if err != nil {
-		return err
-	}
-	fmt.Printf("car=%q driver=%q track=%q config=%q\n",
-		session.CarName, session.DriverName, session.TrackName, session.TrackConfig)
-
-	// 2) Tell AC to start sending live car updates to this socket.
-	if _, err := conn.Write(acudp.EncodeHandshake(acudp.OpSubscribeUpdate)); err != nil {
-		return fmt.Errorf("send subscribe: %w", err)
-	}
-
-	// Handshake is done. Later reads should not die after 5s of driving.
-	return conn.SetReadDeadline(time.Time{})
 }
