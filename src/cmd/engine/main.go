@@ -13,8 +13,7 @@ import (
 )
 
 const (
-	retryEvery    = 2 * time.Second
-	carPacketSize = 328
+	retryEvery = 2 * time.Second
 )
 
 func main() {
@@ -120,12 +119,13 @@ func main() {
 				log.Println("session ended: ", err)
 				break
 			}
-			if n != carPacketSize {
-				log.Printf("skipping packet: got %d bytes, want %d", n, carPacketSize)
+			car, err := acudp.ParseCarInfo(buf[:n])
+			if err != nil {
+				log.Println("skipping packet: ", err)
 				continue
 			}
 			if time.Since(lastLog) > 2*time.Second {
-				fmt.Println("car packet: ", n, "bytes")
+				fmt.Printf("speed_kmh=%.1f gear=%d rpm=%.0f\n", car.SpeedKmh, car.Gear, car.EngineRPM)
 				lastLog = time.Now()
 			}
 		}
