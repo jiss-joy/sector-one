@@ -1,2 +1,4 @@
 docs/plans/**
 *.exe
+web/node_modules
+web/.next
