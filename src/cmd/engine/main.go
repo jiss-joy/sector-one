@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"os"
@@ -15,36 +17,53 @@ import (
 )
 
 const (
-	retryEvery = 2 * time.Second
+	retryEvery   = 2 * time.Second
+	maxReplayGap = 200 * time.Millisecond
+	logEvery     = 2 * time.Second
+	acHost       = "127.0.0.1"
+	acPort       = 9996
 )
 
 func main() {
-	host := "127.0.0.1"
-	port := 9996
-
-	addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", host, port))
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("Assetto Corsa address:", addr)
-
 	recordPath := flag.String("record", "", "write framed session to this .bin")
+	replayPath := flag.String("replay", "", "play a .bin instead of talking to AC")
+	replayRate := flag.Float64("replay-rate", 1.0, "replay speed multiplier")
 	flag.Parse()
 
-	var rec *record.Writer
-	if *recordPath != "" {
-		var err error
-		rec, err = record.NewWriter(*recordPath)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer rec.Close()
-		log.Println("recording to: ", *recordPath)
+	if *recordPath != "" && *replayPath != "" {
+		log.Fatal("use --record or --replay, not both")
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
+	if *replayPath != "" {
+		if err := runReplay(ctx, *replayPath, *replayRate); err != nil && !errors.Is(err, context.Canceled) {
+			log.Fatal(err)
+		}
+		return
+	}
+
+	addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", acHost, acPort))
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Assetto Corsa address:", addr)
+
+	var rec *record.Writer
+	if *recordPath != "" {
+		rec, err = record.NewWriter(*recordPath)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer rec.Close()
+		log.Println("recording to:", *recordPath)
+	}
+
+	runLive(ctx, addr, rec)
+}
+
+func runLive(ctx context.Context, addr *net.UDPAddr, rec *record.Writer) {
 	for {
 		if ctx.Err() != nil {
 			return
@@ -90,7 +109,6 @@ func main() {
 		}
 
 		fmt.Println("got handshake reply: ", n, "bytes")
-		// Parse the handshake response
 		session, err := acudp.ParseHandshakeResponse(buf[:n])
 		if err != nil {
 			_ = conn.Close()
@@ -105,7 +123,6 @@ func main() {
 
 		writeRec(rec, record.KindHello, buf[:n])
 
-		// Subscribe to updates (AC will send 328 byte packets to conn)
 		n, err = conn.Write(acudp.EncodeHandshake(acudp.OpSubscribeUpdate))
 		if err != nil {
 			_ = conn.Close()
@@ -144,18 +161,7 @@ func main() {
 				continue
 			}
 			writeRec(rec, record.KindCar, buf[:n])
-
-			if lastLog.IsZero() {
-				lastLog = time.Now()
-			}
-			packets++
-			if elapsed := time.Since(lastLog); elapsed >= 2*time.Second {
-				hz := float64(packets) / elapsed.Seconds()
-				fmt.Printf("speed_kmh=%.1f gear=%d rpm=%.0f  (%.0f Hz ingest)\n",
-					car.SpeedKmh, car.Gear, car.EngineRPM, hz)
-				packets = 0
-				lastLog = time.Now()
-			}
+			logCar(car, &lastLog, &packets)
 		}
 		dismiss(conn)
 		_ = conn.Close()
@@ -163,6 +169,93 @@ func main() {
 			return
 		}
 	}
+}
+
+// runReplay reads a .bin and feeds the same parsers as live. No UDP, no AC.
+func runReplay(ctx context.Context, path string, rate float64) error {
+	rd, err := record.NewReader(path)
+	if err != nil {
+		return err
+	}
+	defer rd.Close()
+	log.Println("replaying", path)
+
+	var prev int64
+	capped := false
+	lastLog := time.Time{}
+	packets := 0
+
+	for {
+		if ctx.Err() != nil {
+			return nil
+		}
+		rec, err := rd.Next()
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				log.Println("replay finished")
+				return nil
+			}
+			return err
+		}
+		if err := sleepDelta(ctx, prev, rec.Timestamp, rate, &capped); err != nil {
+			return nil
+		}
+		prev = rec.Timestamp
+
+		switch rec.Kind {
+		case record.KindHello:
+			session, err := acudp.ParseHandshakeResponse(rec.Payload)
+			if err != nil {
+				log.Println("replay handshake:", err)
+				continue
+			}
+			fmt.Printf("car=%q driver=%q track=%q config=%q\n",
+				session.CarName, session.DriverName, session.TrackName, session.TrackConfig)
+		case record.KindCar:
+			car, err := acudp.ParseCarInfo(rec.Payload)
+			if err != nil {
+				log.Println("skipping packet: ", err)
+				continue
+			}
+			logCar(car, &lastLog, &packets)
+		default:
+			log.Printf("replay: unknown kind %d, skipping", rec.Kind)
+		}
+	}
+}
+
+func logCar(car acudp.CarInfo, lastLog *time.Time, packets *int) {
+	if lastLog.IsZero() {
+		*lastLog = time.Now()
+	}
+	*packets++
+	elapsed := time.Since(*lastLog)
+	if elapsed < logEvery {
+		return
+	}
+	hz := float64(*packets) / elapsed.Seconds()
+	fmt.Printf("speed_kmh=%.1f gear=%d rpm=%.0f  (%.0f Hz ingest)\n",
+		car.SpeedKmh, car.Gear, car.EngineRPM, hz)
+	*packets = 0
+	*lastLog = time.Now()
+}
+
+func sleepDelta(ctx context.Context, prev, now int64, rate float64, loggedCap *bool) error {
+	if prev == 0 || rate <= 0 {
+		return nil
+	}
+	d := time.Duration(float64(now-prev) / rate)
+	if d <= 0 {
+		return nil
+	}
+	if d > maxReplayGap {
+		if loggedCap != nil && !*loggedCap {
+			log.Printf("replay: capping gap %s to %s (paused AC / CM)", d.Round(time.Second), maxReplayGap)
+			*loggedCap = true
+		}
+		d = maxReplayGap
+	}
+	return sleep(ctx, d)
 }
 
 func dismiss(conn *net.UDPConn) {
