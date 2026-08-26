@@ -17,7 +17,7 @@ func TestFromCarJSONKeys(t *testing.T) {
 	if err := json.Unmarshal(b, &m); err != nil {
 		t.Fatal(err)
 	}
-	for _, k := range []string{"ts", "speed_kmh", "rpm", "gear", "throttle", "g_lat", "source"} {
+	for _, k := range []string{"ts", "speed_kmh", "rpm", "gear", "throttle", "g_lat", "source", "slip_ratio", "load_n", "abs_in_action"} {
 		if _, ok := m[k]; !ok {
 			t.Fatalf("missing key %q in %s", k, b)
 		}

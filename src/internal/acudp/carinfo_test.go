@@ -54,6 +54,42 @@ func TestParseCarInfoSkipsBoolPad(t *testing.T) {
 	}
 }
 
+func TestParseCarInfoWheelsAndFlags(t *testing.T) {
+	buf := make([]byte, CarInfoSize)
+	buf[0] = 'a'
+	buf[21] = 1 // ABS in action
+	buf[23] = 1 // TC in action
+	putFloat32LE(buf, 84, 10)
+	putFloat32LE(buf, 88, 20)
+	putFloat32LE(buf, 92, 30)
+	putFloat32LE(buf, 96, 40)
+	putFloat32LE(buf, 132, 0.1)
+	putFloat32LE(buf, 136, 0.2)
+	putFloat32LE(buf, 140, 0.3)
+	putFloat32LE(buf, 144, 0.4)
+	putFloat32LE(buf, 180, 1000)
+	putFloat32LE(buf, 184, 2000)
+	putFloat32LE(buf, 188, 3000)
+	putFloat32LE(buf, 192, 4000)
+
+	got, err := ParseCarInfo(buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.AbsInAction || !got.TcInAction || got.AbsEnabled {
+		t.Fatalf("flags %+v", got)
+	}
+	if got.WheelRadS != [4]float32{10, 20, 30, 40} {
+		t.Fatalf("WheelRadS=%v", got.WheelRadS)
+	}
+	if got.SlipRatio != [4]float32{0.1, 0.2, 0.3, 0.4} {
+		t.Fatalf("SlipRatio=%v", got.SlipRatio)
+	}
+	if got.LoadN != [4]float32{1000, 2000, 3000, 4000} {
+		t.Fatalf("LoadN=%v", got.LoadN)
+	}
+}
+
 func TestParseCarInfoRejects(t *testing.T) {
 	if _, err := ParseCarInfo(make([]byte, 100)); err == nil {
 		t.Fatal("expected size error")
