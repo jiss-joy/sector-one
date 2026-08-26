@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"net"
 	"os"
 	"os/signal"
 	"sector-one/internal/acudp"
+	"sector-one/internal/record"
 	"syscall"
 	"time"
 )
@@ -25,6 +27,20 @@ func main() {
 		log.Fatal(err)
 	}
 	fmt.Println("Assetto Corsa address:", addr)
+
+	recordPath := flag.String("record", "", "write framed session to this .bin")
+	flag.Parse()
+
+	var rec *record.Writer
+	if *recordPath != "" {
+		var err error
+		rec, err = record.NewWriter(*recordPath)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer rec.Close()
+		log.Println("recording to: ", *recordPath)
+	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
@@ -87,6 +103,8 @@ func main() {
 		fmt.Printf("car=%q driver=%q track=%q config=%q\n",
 			session.CarName, session.DriverName, session.TrackName, session.TrackConfig)
 
+		writeRec(rec, record.KindHello, buf[:n])
+
 		// Subscribe to updates (AC will send 328 byte packets to conn)
 		n, err = conn.Write(acudp.EncodeHandshake(acudp.OpSubscribeUpdate))
 		if err != nil {
@@ -100,6 +118,7 @@ func main() {
 		fmt.Println("sent subscribe update packet: ", n, "bytes")
 
 		lastLog := time.Time{}
+		packets := 0
 		quit := false
 		for {
 			if ctx.Err() != nil {
@@ -124,8 +143,17 @@ func main() {
 				log.Println("skipping packet: ", err)
 				continue
 			}
-			if time.Since(lastLog) > 2*time.Second {
-				fmt.Printf("speed_kmh=%.1f gear=%d rpm=%.0f\n", car.SpeedKmh, car.Gear, car.EngineRPM)
+			writeRec(rec, record.KindCar, buf[:n])
+
+			if lastLog.IsZero() {
+				lastLog = time.Now()
+			}
+			packets++
+			if elapsed := time.Since(lastLog); elapsed >= 2*time.Second {
+				hz := float64(packets) / elapsed.Seconds()
+				fmt.Printf("speed_kmh=%.1f gear=%d rpm=%.0f  (%.0f Hz ingest)\n",
+					car.SpeedKmh, car.Gear, car.EngineRPM, hz)
+				packets = 0
 				lastLog = time.Now()
 			}
 		}
@@ -150,5 +178,14 @@ func sleep(ctx context.Context, duration time.Duration) error {
 		return ctx.Err()
 	case <-t.C:
 		return nil
+	}
+}
+
+func writeRec(rec *record.Writer, kind uint8, payload []byte) {
+	if rec == nil {
+		return
+	}
+	if err := rec.Write(kind, payload); err != nil {
+		log.Println("record write:", err)
 	}
 }
