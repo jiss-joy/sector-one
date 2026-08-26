@@ -23,6 +23,23 @@ func TestParseCarInfo(t *testing.T) {
 	}
 }
 
+func TestParseCarInfoExtendedOffsets(t *testing.T) {
+	buf := make([]byte, CarInfoSize)
+	buf[0] = 'a'
+	putFloat32LE(buf, 32, 1.5)
+	putFloat32LE(buf, 36, -0.75)
+	putFloat32LE(buf, 72, 0.25)
+	binary.LittleEndian.PutUint32(buf[52:], 4)
+
+	got, err := ParseCarInfo(buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.AccGHorizontal != 1.5 || got.AccGFrontal != -0.75 || got.Steer != 0.25 || got.LapCount != 4 {
+		t.Fatalf("got %+v", got)
+	}
+}
+
 func TestParseCarInfoSkipsBoolPad(t *testing.T) {
 	buf := make([]byte, CarInfoSize)
 	buf[0] = 'a'
