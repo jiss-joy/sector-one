@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-func TestHubDroppedLatest(t *testing.T) {
-	h := NewHub()
+func TestBroadcasterDroppedLatest(t *testing.T) {
+	h := NewBroadcaster()
 	ch := h.Subscribe()
 	defer h.Unsubscribe(ch)
 
@@ -24,8 +24,8 @@ func TestHubDroppedLatest(t *testing.T) {
 	}
 }
 
-func TestHubUnsubscribe(t *testing.T) {
-	h := NewHub()
+func TestBroadcasterUnsubscribe(t *testing.T) {
+	h := NewBroadcaster()
 	ch := h.Subscribe()
 	if h.Subscribers() != 1 {
 		t.Fatalf("subs=%d", h.Subscribers())

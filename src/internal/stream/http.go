@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func Handler(hub *Hub, health func() map[string]any) http.Handler {
+func Handler(broadcaster *Broadcaster, health func() map[string]any) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
 		withCORS(w)
@@ -23,8 +23,8 @@ func Handler(hub *Hub, health func() map[string]any) http.Handler {
 		w.Header().Set("Content-Type", "text/event-stream")
 		w.Header().Set("Cache-Control", "no-cache")
 		w.Header().Set("Connection", "keep-alive")
-		ch := hub.Subscribe()
-		defer hub.Unsubscribe(ch)
+		ch := broadcaster.Subscribe()
+		defer broadcaster.Unsubscribe(ch)
 
 		for {
 			select {

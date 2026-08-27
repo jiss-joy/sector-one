@@ -45,11 +45,11 @@ func main() {
 	if *replayPath != "" {
 		source = "replay"
 	}
-	hub := stream.NewHub()
-	startHTTP(hub, source)
+	broadcaster := stream.NewBroadcaster()
+	startHTTP(broadcaster, source)
 
 	if *replayPath != "" {
-		if err := runReplay(ctx, *replayPath, *replayRate, hub, source); err != nil && !errors.Is(err, context.Canceled) {
+		if err := runReplay(ctx, *replayPath, *replayRate, broadcaster, source); err != nil && !errors.Is(err, context.Canceled) {
 			log.Fatal(err)
 		}
 		return
@@ -71,17 +71,17 @@ func main() {
 		log.Println("recording to:", *recordPath)
 	}
 
-	runLive(ctx, addr, rec, hub, source)
+	runLive(ctx, addr, rec, broadcaster, source)
 }
 
-func startHTTP(hub *stream.Hub, source string) {
+func startHTTP(broadcaster *stream.Broadcaster, source string) {
 	srv := &http.Server{
 		Addr: "127.0.0.1:8080",
-		Handler: stream.Handler(hub, func() map[string]any {
+		Handler: stream.Handler(broadcaster, func() map[string]any {
 			return map[string]any{
 				"ok":          true,
 				"source":      source,
-				"subscribers": hub.Subscribers(),
+				"subscribers": broadcaster.Subscribers(),
 			}
 		}),
 	}
@@ -93,15 +93,15 @@ func startHTTP(hub *stream.Hub, source string) {
 	}()
 }
 
-func publishCar(hub *stream.Hub, car acudp.CarInfo, source string) {
+func publishCar(broadcaster *stream.Broadcaster, car acudp.CarInfo, source string) {
 	b, err := json.Marshal(physics.FromCar(car, source))
 	if err != nil {
 		return
 	}
-	hub.Publish(b)
+	broadcaster.Publish(b)
 }
 
-func runLive(ctx context.Context, addr *net.UDPAddr, rec *record.Writer, hub *stream.Hub, source string) {
+func runLive(ctx context.Context, addr *net.UDPAddr, rec *record.Writer, broadcaster *stream.Broadcaster, source string) {
 	for {
 		if ctx.Err() != nil {
 			return
@@ -199,7 +199,7 @@ func runLive(ctx context.Context, addr *net.UDPAddr, rec *record.Writer, hub *st
 				continue
 			}
 			writeRec(rec, record.KindCar, buf[:n])
-			publishCar(hub, car, source)
+			publishCar(broadcaster, car, source)
 			logCar(car, &lastLog, &packets)
 		}
 		dismiss(conn)
@@ -211,7 +211,7 @@ func runLive(ctx context.Context, addr *net.UDPAddr, rec *record.Writer, hub *st
 }
 
 // runReplay reads a .bin and feeds the same parsers as live. No UDP, no AC.
-func runReplay(ctx context.Context, path string, rate float64, hub *stream.Hub, source string) error {
+func runReplay(ctx context.Context, path string, rate float64, broadcaster *stream.Broadcaster, source string) error {
 	rd, err := record.NewReader(path)
 	if err != nil {
 		return err
@@ -256,7 +256,7 @@ func runReplay(ctx context.Context, path string, rate float64, hub *stream.Hub, 
 				log.Println("skipping packet: ", err)
 				continue
 			}
-			publishCar(hub, car, source)
+			publishCar(broadcaster, car, source)
 			logCar(car, &lastLog, &packets)
 		default:
 			log.Printf("replay: unknown kind %d, skipping", rec.Kind)
