@@ -10,9 +10,9 @@ import (
 	"sector-one/internal/stream"
 )
 
-func startHTTP(broadcaster *stream.Broadcaster, source string) {
+func startHTTP(addr string, broadcaster *stream.Broadcaster, source string) {
 	srv := &http.Server{
-		Addr: "127.0.0.1:8080",
+		Addr: addr,
 		Handler: stream.Handler(broadcaster, func() map[string]any {
 			return map[string]any{
 				"ok":          true,

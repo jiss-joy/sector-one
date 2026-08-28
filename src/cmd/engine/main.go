@@ -27,6 +27,7 @@ func main() {
 	recordPath := flag.String("record", "", "write framed session to this .bin")
 	replayPath := flag.String("replay", "", "play a .bin instead of talking to AC")
 	replayRate := flag.Float64("replay-rate", 1.0, "replay speed multiplier")
+	httpAddr := flag.String("http", "127.0.0.1:8080", "HTTP listen address")
 	flag.Parse()
 
 	if *recordPath != "" && *replayPath != "" {
@@ -41,7 +42,7 @@ func main() {
 		source = "replay"
 	}
 	broadcaster := stream.NewBroadcaster()
-	startHTTP(broadcaster, source)
+	startHTTP(*httpAddr, broadcaster, source)
 
 	if *replayPath != "" {
 		if err := runReplay(ctx, *replayPath, *replayRate, broadcaster, source); err != nil && !errors.Is(err, context.Canceled) {
