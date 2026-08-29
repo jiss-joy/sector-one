@@ -1,9 +1,9 @@
 import type { Conn, Frame } from "@/lib/types";
 
-const CAP = 600;
+const RING_CAPACITY = 600;
 
 let latest: Frame | null = null;
-const ring: Array<Frame | undefined> = new Array(CAP);
+const ring: Array<Frame | undefined> = new Array(RING_CAPACITY);
 let len = 0;
 let head = 0;
 
@@ -13,8 +13,8 @@ const connListeners = new Set<() => void>();
 
 export function pushFrame(f: Frame) {
   ring[head] = f;
-  head = (head + 1) % CAP;
-  if (len < CAP) len++;
+  head = (head + 1) % RING_CAPACITY;
+  if (len < RING_CAPACITY) len++;
   latest = f;
   if (f.source && f.source !== conn.source) {
     conn = { ...conn, source: f.source };
@@ -32,18 +32,18 @@ export function ringLength(): number {
 
 /** Oldest → newest. `fn` must not retain the frame past the call if you mutate later. */
 export function forEachRing(fn: (f: Frame, i: number) => void) {
-  const start = len < CAP ? 0 : head;
+  const start = len < RING_CAPACITY ? 0 : head;
   for (let i = 0; i < len; i++) {
-    const f = ring[(start + i) % CAP];
+    const f = ring[(start + i) % RING_CAPACITY];
     if (f) fn(f, i);
   }
 }
 
 export function lastN(n: number, out: Frame[]): number {
   const take = Math.min(n, len);
-  const start = (len < CAP ? 0 : head) + (len - take);
+  const start = (len < RING_CAPACITY ? 0 : head) + (len - take);
   for (let i = 0; i < take; i++) {
-    out[i] = ring[(start + i) % CAP]!;
+    out[i] = ring[(start + i) % RING_CAPACITY]!;
   }
   return take;
 }

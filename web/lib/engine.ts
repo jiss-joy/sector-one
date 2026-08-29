@@ -1,20 +1,20 @@
 import { pushFrame, setConn } from "@/lib/store";
 import type { Frame } from "@/lib/types";
 
-export const ENGINE = "http://127.0.0.1:8080";
+export const ENGINE = "";
 
 export function connectEngine(): () => void {
-  const es = new EventSource(`${ENGINE}/api/telemetry`);
+  const eventSource = new EventSource(`${ENGINE}/api/telemetry`);
 
-  es.onopen = () => {
+  eventSource.onopen = () => {
     setConn({ state: "open" });
   };
 
-  es.onerror = () => {
+  eventSource.onerror = () => {
     setConn({ state: "error" });
   };
 
-  es.onmessage = (ev) => {
+  eventSource.onmessage = (ev) => {
     try {
       pushFrame(JSON.parse(ev.data) as Frame);
     } catch {
@@ -28,7 +28,7 @@ export function connectEngine(): () => void {
   void fetchHealth();
 
   return () => {
-    es.close();
+    eventSource.close();
     window.clearInterval(poll);
     setConn({ state: "down", subscribers: 0 });
   };

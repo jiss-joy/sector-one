@@ -3,7 +3,7 @@
 import { useRef } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useRaf } from "@/hooks/use-raf";
+import { useRequestAnimationFrame } from "@/hooks/use-raf";
 import { clamp01, gearLabel } from "@/lib/format";
 import { getLatest } from "@/lib/store";
 
@@ -16,7 +16,7 @@ export function Readouts() {
   const rpmBarRef = useRef<HTMLDivElement>(null);
   const steerRef = useRef<HTMLDivElement>(null);
 
-  useRaf(() => {
+  useRequestAnimationFrame(() => {
     const f = getLatest();
     if (!f) return;
     if (speedRef.current) {

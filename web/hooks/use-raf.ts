@@ -2,8 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
-/** One rAF loop. `draw` is stored after commit so the loop is not restarted. */
-export function useRaf(draw: () => void) {
+// It creates a recursive loop that executes your callback exactly once per monitor refresh (usually 60Hz or 144Hz).
+export function useRequestAnimationFrame(draw: () => void) {
   const ref = useRef(draw);
 
   useEffect(() => {

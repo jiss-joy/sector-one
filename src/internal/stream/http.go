@@ -9,12 +9,12 @@ import (
 func Handler(broadcaster *Broadcaster, health func() map[string]any) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
-		withCORS(w)
+		withCORS(w, r)
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(health())
 	})
 	mux.HandleFunc("GET /api/telemetry", func(w http.ResponseWriter, r *http.Request) {
-		withCORS(w)
+		withCORS(w, r)
 		flusher, ok := w.(http.Flusher)
 		if !ok {
 			http.Error(w, "streaming unsupported", http.StatusInternalServerError)
@@ -45,11 +45,17 @@ func Handler(broadcaster *Broadcaster, health func() map[string]any) http.Handle
 }
 
 func options(w http.ResponseWriter, r *http.Request) {
-	withCORS(w)
+	withCORS(w, r)
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func withCORS(w http.ResponseWriter) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+func withCORS(w http.ResponseWriter, r *http.Request) {
+	origin := r.Header.Get("Origin")
+	if origin != "" {
+		// Allow any localhost origin (any port) for dev
+		w.Header().Set("Access-Control-Allow-Origin", origin)
+	} else {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+	}
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 }

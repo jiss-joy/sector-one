@@ -8,21 +8,30 @@ import (
 	"sector-one/internal/acudp"
 	"sector-one/internal/physics"
 	"sector-one/internal/stream"
+	"sector-one/ui"
 )
 
 func startHTTP(addr string, broadcaster *stream.Broadcaster, source string) {
+	apiHandler := stream.Handler(broadcaster, func() map[string]any {
+		return map[string]any{
+			"ok":          true,
+			"source":      source,
+			"subscribers": broadcaster.Subscribers(),
+		}
+	})
+
+	staticHandler := ui.Handler()
+
+	mux := http.NewServeMux()
+	mux.Handle("/api/", apiHandler)
+	mux.Handle("/", staticHandler)
+
 	srv := &http.Server{
-		Addr: addr,
-		Handler: stream.Handler(broadcaster, func() map[string]any {
-			return map[string]any{
-				"ok":          true,
-				"source":      source,
-				"subscribers": broadcaster.Subscribers(),
-			}
-		}),
+		Addr:    addr,
+		Handler: mux,
 	}
 	go func() {
-		log.Println("sse listening on", srv.Addr)
+		log.Println("engine listening on", srv.Addr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Println("http:", err)
 		}

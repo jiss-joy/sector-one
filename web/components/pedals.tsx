@@ -3,7 +3,7 @@
 import { useRef, type Ref } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useRaf } from "@/hooks/use-raf";
+import { useRequestAnimationFrame } from "@/hooks/use-raf";
 import { clamp01 } from "@/lib/format";
 import { getLatest } from "@/lib/store";
 
@@ -15,7 +15,7 @@ export function Pedals() {
   const brkLbl = useRef<HTMLSpanElement>(null);
   const cluLbl = useRef<HTMLSpanElement>(null);
 
-  useRaf(() => {
+  useRequestAnimationFrame(() => {
     const f = getLatest();
     if (!f) return;
     const t = clamp01(f.throttle);

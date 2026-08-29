@@ -2,3 +2,5 @@ docs/plans/**
 *.exe
 web/node_modules
 web/.next
+web/out
+src/ui/public

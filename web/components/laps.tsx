@@ -3,7 +3,7 @@
 import { useRef, type ReactNode, type Ref } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useRaf } from "@/hooks/use-raf";
+import { useRequestAnimationFrame } from "@/hooks/use-raf";
 import { formatLap } from "@/lib/format";
 import { getLatest } from "@/lib/store";
 
@@ -17,7 +17,7 @@ export function Laps() {
   const tcRef = useRef<HTMLSpanElement>(null);
   const pitRef = useRef<HTMLSpanElement>(null);
 
-  useRaf(() => {
+  useRequestAnimationFrame(() => {
     const f = getLatest();
     if (!f) return;
     if (timeRef.current) timeRef.current.textContent = formatLap(f.lap_time_ms);
