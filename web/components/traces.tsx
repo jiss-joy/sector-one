@@ -3,7 +3,7 @@
 import { useRef } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useRequestAnimationFrame } from "@/hooks/use-raf";
+import { useHeartbeat } from "@/hooks/use-heartbeat";
 import { clamp01 } from "@/lib/format";
 import { forEachRing } from "@/lib/store";
 
@@ -23,7 +23,7 @@ function resize(canvas: HTMLCanvasElement) {
 export function Traces() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  useRequestAnimationFrame(() => {
+  useHeartbeat(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");

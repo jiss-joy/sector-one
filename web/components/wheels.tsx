@@ -3,7 +3,7 @@
 import { useRef, type Ref } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useRequestAnimationFrame } from "@/hooks/use-raf";
+import { useHeartbeat } from "@/hooks/use-heartbeat";
 import { isLocked, isSlipping } from "@/lib/format";
 import { getLatest } from "@/lib/store";
 
@@ -44,7 +44,7 @@ export function Wheels() {
   const loadRL = useRef<HTMLSpanElement>(null);
   const loadRR = useRef<HTMLSpanElement>(null);
 
-  useRequestAnimationFrame(() => {
+  useHeartbeat(() => {
     const f = getLatest();
     if (!f) return;
     const load = f.load_n ?? [0, 0, 0, 0];
