@@ -1,8 +1,6 @@
 package physics
 
 import (
-	"time"
-
 	"sector-one/internal/acudp"
 )
 
@@ -34,9 +32,9 @@ type Frame struct {
 	Source        string     `json:"source"`
 }
 
-func FromCar(c acudp.CarInfo, source string) Frame {
+func FromCar(c acudp.CarInfo, source string, ts int64) Frame {
 	return Frame{
-		TS:            time.Now().UnixMilli(),
+		TS:            ts,
 		SpeedKmh:      c.SpeedKmh,
 		RPM:           c.EngineRPM,
 		Gear:          c.Gear,

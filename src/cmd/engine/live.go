@@ -95,7 +95,7 @@ func runLive(ctx context.Context, addr *net.UDPAddr, rec *record.Writer, broadca
 				continue
 			}
 			writeRec(rec, record.KindCar, buf[:n])
-			publishCar(broadcaster, car, source)
+			publishCar(broadcaster, car, source, time.Now().UnixMilli())
 			logCar(car, &lastLog, &packets)
 		}
 		dismiss(conn)

@@ -59,7 +59,7 @@ func runReplay(ctx context.Context, path string, rate float64, broadcaster *stre
 				log.Println("skipping packet: ", err)
 				continue
 			}
-			publishCar(broadcaster, car, source)
+			publishCar(broadcaster, car, source, rec.Timestamp)
 			logCar(car, &lastLog, &packets)
 		default:
 			log.Printf("replay: unknown kind %d, skipping", rec.Kind)

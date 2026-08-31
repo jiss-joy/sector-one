@@ -8,7 +8,7 @@ import (
 )
 
 func TestFromCarJSONKeys(t *testing.T) {
-	f := FromCar(acudp.CarInfo{SpeedKmh: 100, EngineRPM: 5000, Gear: 3}, "replay")
+	f := FromCar(acudp.CarInfo{SpeedKmh: 100, EngineRPM: 5000, Gear: 3}, "replay", 12345)
 	b, err := json.Marshal(f)
 	if err != nil {
 		t.Fatal(err)

@@ -38,8 +38,8 @@ func startHTTP(addr string, broadcaster *stream.Broadcaster, source string) {
 	}()
 }
 
-func publishCar(broadcaster *stream.Broadcaster, car acudp.CarInfo, source string) {
-	b, err := json.Marshal(physics.FromCar(car, source))
+func publishCar(broadcaster *stream.Broadcaster, car acudp.CarInfo, source string, ts int64) {
+	b, err := json.Marshal(physics.FromCar(car, source, ts))
 	if err != nil {
 		return
 	}
