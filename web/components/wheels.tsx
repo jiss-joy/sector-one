@@ -1,10 +1,8 @@
 "use client";
 
-import { useRef, type Ref } from "react";
+import { useRef } from "react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useHeartbeat } from "@/hooks/use-heartbeat";
-import { TELEMETRY_CONFIG } from "@/lib/constants";
 import { isLocked, isSlipping } from "@/lib/format";
 import { getLatest } from "@/lib/store";
 

@@ -1,8 +1,7 @@
 "use client";
 
-import { useRef, type ReactNode, type Ref } from "react";
+import { useRef, type ReactNode } from "react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useHeartbeat } from "@/hooks/use-heartbeat";
 import { formatLap } from "@/lib/format";
 import { getLatest } from "@/lib/store";

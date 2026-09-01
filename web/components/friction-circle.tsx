@@ -2,7 +2,6 @@
 
 import { useRef } from "react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useHeartbeat } from "@/hooks/use-heartbeat";
 import { TELEMETRY_CONFIG } from "@/lib/constants";
 import { lastN } from "@/lib/store";
@@ -32,8 +31,11 @@ export function FrictionCircle() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     const { w, h, dpr } = resize(canvas);
+    
+    // Clear entire raw buffer before transform
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, w, h);
 
     const cx = w / 2;
     const cy = h / 2;
@@ -67,6 +69,7 @@ export function FrictionCircle() {
     ctx.beginPath();
     ctx.strokeStyle = "rgba(74,222,128,0.45)";
     ctx.lineWidth = 1;
+    ctx.lineJoin = "round";
     for (let i = 0; i < n; i++) {
       const p = plot(scratch[i].g_lat, scratch[i].g_long);
       if (i === 0) ctx.moveTo(p.x, p.y);
