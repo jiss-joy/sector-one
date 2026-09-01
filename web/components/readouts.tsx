@@ -28,7 +28,7 @@ export function Readouts() {
       rpmRef.current.textContent = f.rpm.toFixed(0);
     }
     if (rpmBarRef.current) {
-      rpmBarRef.current.style.width = `${clamp01(f.rpm / TELEMETRY_CONFIG.RPM_MAX) * 100}%`;
+      rpmBarRef.current.style.width = `${clamp01(f.rpm / f.max_rpm) * 100}%`;
     }
     if (steerRef.current) {
       const x = (clamp01((f.steer + 1) / 2) * 100).toFixed(1);

@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"sector-one/internal/physics"
 	"sector-one/internal/record"
 	"sector-one/internal/stream"
 	"syscall"
@@ -42,10 +43,11 @@ func main() {
 		source = "replay"
 	}
 	broadcaster := stream.NewBroadcaster()
+	sm := physics.NewSpecManager("cars.json")
 	startHTTP(*httpAddr, broadcaster, source)
 
 	if *replayPath != "" {
-		if err := runReplay(ctx, *replayPath, *replayRate, broadcaster, source); err != nil && !errors.Is(err, context.Canceled) {
+		if err := runReplay(ctx, *replayPath, *replayRate, sm, broadcaster, source); err != nil && !errors.Is(err, context.Canceled) {
 			log.Fatal(err)
 		}
 		return
@@ -67,5 +69,5 @@ func main() {
 		log.Println("recording to:", *recordPath)
 	}
 
-	runLive(ctx, addr, rec, broadcaster, source)
+	runLive(ctx, addr, rec, sm, broadcaster, source)
 }

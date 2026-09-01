@@ -9,12 +9,13 @@ import (
 	"time"
 
 	"sector-one/internal/acudp"
+	"sector-one/internal/physics"
 	"sector-one/internal/record"
 	"sector-one/internal/stream"
 )
 
 // runReplay reads a .bin and feeds the same parsers as live. No UDP, no AC.
-func runReplay(ctx context.Context, path string, rate float64, broadcaster *stream.Broadcaster, source string) error {
+func runReplay(ctx context.Context, path string, rate float64, sm *physics.SpecManager, broadcaster *stream.Broadcaster, source string) error {
 	rd, err := record.NewReader(path)
 	if err != nil {
 		return err
@@ -26,6 +27,7 @@ func runReplay(ctx context.Context, path string, rate float64, broadcaster *stre
 	capped := false
 	lastLog := time.Time{}
 	packets := 0
+	carName := "unknown"
 
 	for {
 		if ctx.Err() != nil {
@@ -51,6 +53,7 @@ func runReplay(ctx context.Context, path string, rate float64, broadcaster *stre
 				log.Println("replay handshake:", err)
 				continue
 			}
+			carName = session.CarName
 			fmt.Printf("car=%q driver=%q track=%q config=%q\n",
 				session.CarName, session.DriverName, session.TrackName, session.TrackConfig)
 		case record.KindCar:
@@ -59,7 +62,17 @@ func runReplay(ctx context.Context, path string, rate float64, broadcaster *stre
 				log.Println("skipping packet: ", err)
 				continue
 			}
-			publishCar(broadcaster, car, source, rec.Timestamp)
+
+			// Auto-calibrate
+			maxLoad := float32(0)
+			for _, l := range car.LoadN {
+				if l > maxLoad {
+					maxLoad = l
+				}
+			}
+			sm.Update(carName, car.EngineRPM, maxLoad, car.EngineLimiter)
+
+			publishCar(sm, broadcaster, car, source, rec.Timestamp, carName)
 			logCar(car, &lastLog, &packets)
 		default:
 			log.Printf("replay: unknown kind %d, skipping", rec.Kind)

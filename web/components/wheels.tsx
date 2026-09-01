@@ -16,8 +16,9 @@ function paintCorner(
   bar: HTMLDivElement | null,
   flag: HTMLSpanElement | null,
   loadEl: HTMLSpanElement | null,
+  maxLoad: number,
 ) {
-  if (bar) bar.style.height = `${Math.min(100, (load / TELEMETRY_CONFIG.LOAD_MAX) * 100)}%`;
+  if (bar) bar.style.height = `${Math.min(100, (load / maxLoad) * 100)}%`;
   if (loadEl) loadEl.textContent = load.toFixed(0);
   if (flag) {
     const lock = isLocked(speed, wheel);
@@ -49,10 +50,10 @@ export function Wheels() {
     const load = f.load_n ?? [0, 0, 0, 0];
     const slip = f.slip_ratio ?? [0, 0, 0, 0];
     const wh = f.wheel_rad_s ?? [0, 0, 0, 0];
-    paintCorner(load[0], slip[0], wh[0], f.speed_kmh, barFL.current, flagFL.current, loadFL.current);
-    paintCorner(load[1], slip[1], wh[1], f.speed_kmh, barFR.current, flagFR.current, loadFR.current);
-    paintCorner(load[2], slip[2], wh[2], f.speed_kmh, barRL.current, flagRL.current, loadRL.current);
-    paintCorner(load[3], slip[3], wh[3], f.speed_kmh, barRR.current, flagRR.current, loadRR.current);
+    paintCorner(load[0], slip[0], wh[0], f.speed_kmh, barFL.current, flagFL.current, loadFL.current, f.max_load);
+    paintCorner(load[1], slip[1], wh[1], f.speed_kmh, barFR.current, flagFR.current, loadFR.current, f.max_load);
+    paintCorner(load[2], slip[2], wh[2], f.speed_kmh, barRL.current, flagRL.current, loadRL.current, f.max_load);
+    paintCorner(load[3], slip[3], wh[3], f.speed_kmh, barRR.current, flagRR.current, loadRR.current, f.max_load);
   });
 
   return (

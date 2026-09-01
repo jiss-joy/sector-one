@@ -23,6 +23,8 @@ export type Frame = {
   wheel_rad_s: [number, number, number, number];
   slip_ratio: [number, number, number, number];
   load_n: [number, number, number, number];
+  max_rpm: number;
+  max_load: number;
   source: string;
 };
 

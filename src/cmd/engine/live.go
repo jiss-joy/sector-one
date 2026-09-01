@@ -8,11 +8,12 @@ import (
 	"time"
 
 	"sector-one/internal/acudp"
+	"sector-one/internal/physics"
 	"sector-one/internal/record"
 	"sector-one/internal/stream"
 )
 
-func runLive(ctx context.Context, addr *net.UDPAddr, rec *record.Writer, broadcaster *stream.Broadcaster, source string) {
+func runLive(ctx context.Context, addr *net.UDPAddr, rec *record.Writer, sm *physics.SpecManager, broadcaster *stream.Broadcaster, source string) {
 	for {
 		if ctx.Err() != nil {
 			return
@@ -95,7 +96,17 @@ func runLive(ctx context.Context, addr *net.UDPAddr, rec *record.Writer, broadca
 				continue
 			}
 			writeRec(rec, record.KindCar, buf[:n])
-			publishCar(broadcaster, car, source, time.Now().UnixMilli())
+
+			// Auto-calibrate
+			maxLoad := float32(0)
+			for _, l := range car.LoadN {
+				if l > maxLoad {
+					maxLoad = l
+				}
+			}
+			sm.Update(session.CarName, car.EngineRPM, maxLoad, car.EngineLimiter)
+
+			publishCar(sm, broadcaster, car, source, time.Now().UnixMilli(), session.CarName)
 			logCar(car, &lastLog, &packets)
 		}
 		dismiss(conn)
