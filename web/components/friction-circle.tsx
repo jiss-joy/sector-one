@@ -4,12 +4,11 @@ import { useRef } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useHeartbeat } from "@/hooks/use-heartbeat";
+import { TELEMETRY_CONFIG } from "@/lib/constants";
 import { lastN } from "@/lib/store";
 import type { Frame } from "@/lib/types";
 
-const TAIL = 180;
-const scratch: Frame[] = new Array(TAIL);
-const SCALE = 2.5; // G units to edge of circle
+const scratch: Frame[] = new Array(TELEMETRY_CONFIG.FRICTION_CIRCLE_TAIL_COUNT);
 
 function resize(canvas: HTMLCanvasElement) {
   const dpr = window.devicePixelRatio || 1;
@@ -44,7 +43,7 @@ export function FrictionCircle() {
     ctx.lineWidth = 1;
     for (const g of [1, 2]) {
       ctx.beginPath();
-      ctx.arc(cx, cy, r * (g / SCALE), 0, Math.PI * 2);
+      ctx.arc(cx, cy, r * (g / TELEMETRY_CONFIG.FRICTION_CIRCLE_G_SCALE), 0, Math.PI * 2);
       ctx.stroke();
     }
     ctx.beginPath();
@@ -54,13 +53,13 @@ export function FrictionCircle() {
     ctx.lineTo(cx, cy + r);
     ctx.stroke();
 
-    const n = lastN(TAIL, scratch);
+    const n = lastN(TELEMETRY_CONFIG.FRICTION_CIRCLE_TAIL_COUNT, scratch);
     if (n === 0) return;
 
     const plot = (lat: number, lon: number) => {
-      const x = cx + (lat / SCALE) * r;
+      const x = cx + (lat / TELEMETRY_CONFIG.FRICTION_CIRCLE_G_SCALE) * r;
       // +g_long up. Flip this one line if a brake zone plots the wrong way.
-      const y = cy - (lon / SCALE) * r;
+      const y = cy - (lon / TELEMETRY_CONFIG.FRICTION_CIRCLE_G_SCALE) * r;
       return { x, y };
     };
 

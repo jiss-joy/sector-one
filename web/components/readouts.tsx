@@ -4,10 +4,9 @@ import { useRef } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useHeartbeat } from "@/hooks/use-heartbeat";
+import { TELEMETRY_CONFIG } from "@/lib/constants";
 import { clamp01, gearLabel } from "@/lib/format";
 import { getLatest } from "@/lib/store";
-
-const RPM_MAX = 8000;
 
 export function Readouts() {
   const speedRef = useRef<HTMLSpanElement>(null);
@@ -29,7 +28,7 @@ export function Readouts() {
       rpmRef.current.textContent = f.rpm.toFixed(0);
     }
     if (rpmBarRef.current) {
-      rpmBarRef.current.style.width = `${clamp01(f.rpm / RPM_MAX) * 100}%`;
+      rpmBarRef.current.style.width = `${clamp01(f.rpm / TELEMETRY_CONFIG.RPM_MAX) * 100}%`;
     }
     if (steerRef.current) {
       const x = (clamp01((f.steer + 1) / 2) * 100).toFixed(1);

@@ -4,10 +4,9 @@ import { useRef, type Ref } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useHeartbeat } from "@/hooks/use-heartbeat";
+import { TELEMETRY_CONFIG } from "@/lib/constants";
 import { isLocked, isSlipping } from "@/lib/format";
 import { getLatest } from "@/lib/store";
-
-const LOAD_MAX = 8000;
 
 function paintCorner(
   load: number,
@@ -18,7 +17,7 @@ function paintCorner(
   flag: HTMLSpanElement | null,
   loadEl: HTMLSpanElement | null,
 ) {
-  if (bar) bar.style.height = `${Math.min(100, (load / LOAD_MAX) * 100)}%`;
+  if (bar) bar.style.height = `${Math.min(100, (load / TELEMETRY_CONFIG.LOAD_MAX) * 100)}%`;
   if (loadEl) loadEl.textContent = load.toFixed(0);
   if (flag) {
     const lock = isLocked(speed, wheel);
