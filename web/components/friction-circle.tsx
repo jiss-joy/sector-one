@@ -58,8 +58,9 @@ export function FrictionCircle() {
 
     const plot = (lat: number, lon: number) => {
       const x = cx + (lat / TELEMETRY_CONFIG.FRICTION_CIRCLE_G_SCALE) * r;
-      // +g_long up. Flip this one line if a brake zone plots the wrong way.
-      const y = cy - (lon / TELEMETRY_CONFIG.FRICTION_CIRCLE_G_SCALE) * r;
+      // Flip longitudinal axis if calibrated
+      const gLong = TELEMETRY_CONFIG.FRICTION_CIRCLE_FLIP_LONG ? -lon : lon;
+      const y = cy - (gLong / TELEMETRY_CONFIG.FRICTION_CIRCLE_G_SCALE) * r;
       return { x, y };
     };
 
@@ -82,13 +83,11 @@ export function FrictionCircle() {
   });
 
   return (
-    <Card size="sm" className="h-full">
-      <CardHeader>
-        <CardTitle className="text-muted-foreground">Friction circle</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <canvas ref={canvasRef} className="aspect-square w-full" />
-      </CardContent>
-    </Card>
+    <div className="relative flex flex-col gap-2 rounded border border-white/5 bg-zinc-900/40 p-4">
+      <span className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">G-Force</span>
+      <div className="flex aspect-square w-full items-center justify-center p-2">
+        <canvas ref={canvasRef} className="h-full w-full" />
+      </div>
+    </div>
   );
 }

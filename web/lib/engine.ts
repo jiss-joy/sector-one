@@ -1,7 +1,7 @@
 import { pushFrame, setConn } from "@/lib/store";
 import type { Frame } from "@/lib/types";
 
-export const ENGINE = "";
+export const ENGINE = "http://127.0.0.1:8080";
 
 export function connectEngine(): () => void {
   const eventSource = new EventSource(`${ENGINE}/api/telemetry`);

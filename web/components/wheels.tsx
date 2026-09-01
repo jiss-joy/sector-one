@@ -57,51 +57,47 @@ export function Wheels() {
   });
 
   return (
-    <Card size="sm">
-      <CardHeader>
-        <CardTitle className="text-muted-foreground">
-          Load{" "}
-          <span className="font-sans text-[10px] font-normal">not tyre temp</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="grid grid-cols-2 gap-3">
-        <Corner name="FL" barRef={barFL} flagRef={flagFL} loadRef={loadFL} />
-        <Corner name="FR" barRef={barFR} flagRef={flagFR} loadRef={loadFR} />
-        <Corner name="RL" barRef={barRL} flagRef={flagRL} loadRef={loadRL} />
-        <Corner name="RR" barRef={barRR} flagRef={flagRR} loadRef={loadRR} />
-      </CardContent>
-    </Card>
+    <div className="flex flex-col gap-2">
+      <span className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Tyre Load</span>
+      <div className="grid grid-cols-2 gap-2">
+        <MiniCorner name="FL" barRef={barFL} flagRef={flagFL} loadRef={loadFL} />
+        <MiniCorner name="FR" barRef={barFR} flagRef={flagFR} loadRef={loadFR} />
+        <MiniCorner name="RL" barRef={barRL} flagRef={flagRL} loadRef={loadRL} />
+        <MiniCorner name="RR" barRef={barRR} flagRef={flagRR} loadRef={loadRR} />
+      </div>
+    </div>
   );
 }
 
-function Corner({
+function MiniCorner({
   name,
   barRef,
   flagRef,
   loadRef,
 }: {
   name: string;
-  barRef: Ref<HTMLDivElement>;
-  flagRef: Ref<HTMLSpanElement>;
-  loadRef: Ref<HTMLSpanElement>;
+  barRef: React.RefObject<HTMLDivElement>;
+  flagRef: React.RefObject<HTMLSpanElement>;
+  loadRef: React.RefObject<HTMLSpanElement>;
 }) {
   return (
-    <div className="space-y-1">
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] uppercase text-muted-foreground">{name}</span>
-        <span ref={flagRef} className="text-transparent">
-          —
-        </span>
+    <div className="relative flex h-24 w-20 flex-col items-center justify-between rounded border border-white/5 bg-zinc-900/50 p-2 overflow-hidden">
+      {/* Background fill bar */}
+      <div 
+        ref={barRef} 
+        className="absolute inset-x-0 bottom-0 bg-emerald-500/20 transition-all duration-75 border-t-2 border-emerald-500" 
+        style={{ height: "0%" }} 
+      />
+      
+      <div className="z-10 flex w-full justify-between items-start">
+        <span className="text-[10px] font-bold text-zinc-500">{name}</span>
+        <span ref={flagRef} className="text-[8px] font-bold uppercase tracking-tighter"></span>
       </div>
-      <div className="relative h-16 overflow-hidden rounded-sm bg-muted">
-        <div ref={barRef} className="absolute inset-x-0 bottom-0 bg-primary/80" />
+
+      <div className="z-10 flex flex-col items-center">
+        <span ref={loadRef} className="font-mono text-sm font-bold text-white tabular-nums">0</span>
+        <span className="text-[7px] font-bold text-white/20 uppercase">N</span>
       </div>
-      <span
-        ref={loadRef}
-        className="block font-mono text-[10px] tabular-nums text-muted-foreground"
-      >
-        0
-      </span>
     </div>
   );
 }

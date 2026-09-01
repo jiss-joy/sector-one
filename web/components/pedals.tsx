@@ -24,22 +24,17 @@ export function Pedals() {
     if (thrBar.current) thrBar.current.style.height = `${t * 100}%`;
     if (brkBar.current) brkBar.current.style.height = `${b * 100}%`;
     if (cluBar.current) cluBar.current.style.height = `${c * 100}%`;
-    if (thrLbl.current) thrLbl.current.textContent = t.toFixed(2);
-    if (brkLbl.current) brkLbl.current.textContent = b.toFixed(2);
-    if (cluLbl.current) cluLbl.current.textContent = c.toFixed(2);
+    if (thrLbl.current) thrLbl.current.textContent = (t * 100).toFixed(0);
+    if (brkLbl.current) brkLbl.current.textContent = (b * 100).toFixed(0);
+    if (cluLbl.current) cluLbl.current.textContent = (c * 100).toFixed(0);
   });
 
   return (
-    <Card size="sm" className="h-full">
-      <CardHeader>
-        <CardTitle className="text-muted-foreground">Pedals</CardTitle>
-      </CardHeader>
-      <CardContent className="flex h-40 items-end justify-around gap-4">
-        <PedalCol barRef={thrBar} labelRef={thrLbl} name="throttle" color="bg-emerald-500" />
-        <PedalCol barRef={brkBar} labelRef={brkLbl} name="brake" color="bg-red-500" />
-        <PedalCol barRef={cluBar} labelRef={cluLbl} name="clutch" color="bg-sky-500" />
-      </CardContent>
-    </Card>
+    <div className="flex h-44 items-end justify-around gap-6">
+      <PedalCol barRef={cluBar} labelRef={cluLbl} name="CLU" color="bg-sky-500" />
+      <PedalCol barRef={brkBar} labelRef={brkLbl} name="BRK" color="bg-red-500" />
+      <PedalCol barRef={thrBar} labelRef={thrLbl} name="THR" color="bg-emerald-500" />
+    </div>
   );
 }
 
@@ -49,23 +44,23 @@ function PedalCol({
   name,
   color,
 }: {
-  barRef: Ref<HTMLDivElement>;
-  labelRef: Ref<HTMLSpanElement>;
+  barRef: React.RefObject<HTMLDivElement>;
+  labelRef: React.RefObject<HTMLSpanElement>;
   name: string;
   color: string;
 }) {
   return (
-    <div className="flex h-full flex-1 flex-col items-center gap-1">
+    <div className="flex h-full flex-1 flex-col items-center gap-2">
       <span
         ref={labelRef}
-        className="font-mono text-[10px] tabular-nums text-muted-foreground"
+        className="font-mono text-sm font-bold tabular-nums text-white/80"
       >
-        0.00
+        0
       </span>
-      <div className="relative w-full flex-1 overflow-hidden rounded-sm bg-muted">
-        <div ref={barRef} className={`absolute inset-x-0 bottom-0 ${color}`} />
+      <div className="relative w-full flex-1 overflow-hidden rounded-sm bg-zinc-800/50">
+        <div ref={barRef} className={`absolute inset-x-0 bottom-0 ${color} shadow-[0_0_10px_rgba(0,0,0,0.5)] transition-all duration-75`} />
       </div>
-      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+      <span className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase">
         {name}
       </span>
     </div>
