@@ -28,6 +28,8 @@ type Frame struct {
 	EngineLimiter bool       `json:"engine_limiter"`
 	WheelRadS     [4]float32 `json:"wheel_rad_s"`
 	SlipRatio     [4]float32 `json:"slip_ratio"`
+	SlipAngle     [4]float32 `json:"slip_angle"`
+	NormalizedPos float32    `json:"normalized_pos"`
 	LoadN         [4]float32 `json:"load_n"`
 	MaxRPM        float32    `json:"max_rpm"`
 	MaxLoad       float32    `json:"max_load"`
@@ -59,6 +61,8 @@ func FromCar(c acudp.CarInfo, source string, ts int64, spec CarSpec) Frame {
 		EngineLimiter: c.EngineLimiter,
 		WheelRadS:     c.WheelRadS,
 		SlipRatio:     c.SlipRatio,
+		SlipAngle:     c.SlipAngle,
+		NormalizedPos: c.NormalizedPos,
 		LoadN:         c.LoadN,
 		MaxRPM:        spec.MaxRPM,
 		MaxLoad:       spec.MaxLoad,

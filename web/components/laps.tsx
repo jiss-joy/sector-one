@@ -13,8 +13,6 @@ export function Laps() {
   const bestRef = useRef<HTMLSpanElement>(null);
   const countRef = useRef<HTMLSpanElement>(null);
   const deltaRef = useRef<HTMLSpanElement>(null);
-  const absRef = useRef<HTMLSpanElement>(null);
-  const tcRef = useRef<HTMLSpanElement>(null);
   const pitRef = useRef<HTMLSpanElement>(null);
 
   useHeartbeat(() => {
@@ -37,55 +35,47 @@ export function Laps() {
         deltaRef.current.className = "font-mono tabular-nums text-muted-foreground";
       }
     }
-    if (absRef.current) {
-      absRef.current.dataset.active = f.abs_in_action ? "1" : "0";
-    }
-    if (tcRef.current) {
-      tcRef.current.dataset.active = f.tc_in_action ? "1" : "0";
-    }
     if (pitRef.current) {
       pitRef.current.dataset.active = f.in_pit ? "1" : "0";
     }
   });
 
   return (
-    <Card size="sm">
-      <CardHeader>
-        <CardTitle className="text-muted-foreground">Laps</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <Row label="current">
-          <span ref={timeRef} className="font-mono tabular-nums">
-            --:--.---
-          </span>
-        </Row>
-        <Row label="last">
-          <span ref={lastRef} className="font-mono tabular-nums">
-            --:--.---
-          </span>
-        </Row>
-        <Row label="best">
-          <span ref={bestRef} className="font-mono tabular-nums">
-            --:--.---
-          </span>
-        </Row>
-        <Row label="delta">
-          <span ref={deltaRef} className="font-mono tabular-nums text-muted-foreground">
-            —
-          </span>
-        </Row>
-        <Row label="count">
-          <span ref={countRef} className="font-mono tabular-nums">
-            0
-          </span>
-        </Row>
-        <div className="flex gap-2 pt-1">
-          <Light ref={absRef} label="ABS" />
-          <Light ref={tcRef} label="TC" />
-          <Light ref={pitRef} label="PIT" />
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2 rounded border border-white/5 bg-zinc-900/40 p-4">
+        <span className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Timing</span>
+        <div className="space-y-1">
+          <Row label="current">
+            <span ref={timeRef} className="font-mono text-xl tabular-nums text-white">
+              --:--.---
+            </span>
+          </Row>
+          <Row label="delta">
+            <span ref={deltaRef} className="font-mono text-lg tabular-nums text-muted-foreground">
+              —
+            </span>
+          </Row>
+          <Row label="last">
+            <span ref={lastRef} className="font-mono tabular-nums">
+              --:--.---
+            </span>
+          </Row>
+          <Row label="best">
+            <span ref={bestRef} className="font-mono tabular-nums text-emerald-400/80">
+              --:--.---
+            </span>
+          </Row>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+      
+      <div className="flex items-center justify-between px-2">
+        <div className="flex flex-col">
+          <span className="text-[8px] font-bold text-zinc-500 uppercase">Lap</span>
+          <span ref={countRef} className="font-mono text-2xl font-bold text-white">0</span>
+        </div>
+        <Light ref={pitRef} label="PIT" />
+      </div>
+    </div>
   );
 }
 
