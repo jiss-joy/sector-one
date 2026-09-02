@@ -29,10 +29,8 @@ export function Traces() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     const { w, h, dpr } = resize(canvas);
-    
-    // Clear the entire raw pixel buffer BEFORE applying the DPR scale transform
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     let n = 0;
@@ -41,13 +39,24 @@ export function Traces() {
     });
     if (n < 2) return;
 
-    const series: { stroke: string; pick: (f: Frame) => number }[] =
-      [
-        { stroke: "#22c55e", pick: (f) => clamp01(f.throttle) },
-        { stroke: "#ef4444", pick: (f) => clamp01(f.brake) },
-        { stroke: "#38bdf8", pick: (f) => clamp01(f.clutch) },
-        { stroke: "#f59e0b", pick: (f) => clamp01((f.steer + 1) / 2) },
-      ];
+    ctx.strokeStyle = "rgba(255,255,255,0.05)";
+    ctx.lineWidth = 1;
+    for (const v of [0, 0.5, 1]) {
+      const y = (1 - v) * h;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,0.2)";
+      ctx.font = "8px monospace";
+      ctx.fillText(String(v), 2, Math.max(8, y - 2));
+    }
+
+    const series: { stroke: string; pick: (f: Frame) => number }[] = [
+      { stroke: "#22c55e", pick: (f) => clamp01(f.throttle) },
+      { stroke: "#ef4444", pick: (f) => clamp01(f.brake) },
+      { stroke: "#38bdf8", pick: (f) => clamp01(f.clutch) },
+    ];
 
     for (const ser of series) {
       ctx.beginPath();
@@ -69,7 +78,9 @@ export function Traces() {
   return (
     <div className="flex h-full flex-col gap-2 p-2">
       <div className="flex items-center justify-between px-1">
-        <span className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Input History</span>
+        <span className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">
+          Input History
+        </span>
         <div className="flex gap-2">
           <div className="flex items-center gap-1">
             <div className="h-1.5 w-1.5 rounded-full bg-[#22c55e]" />
@@ -80,8 +91,8 @@ export function Traces() {
             <span className="text-[8px] font-bold text-zinc-500">BRK</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="h-1.5 w-1.5 rounded-full bg-[#f59e0b]" />
-            <span className="text-[8px] font-bold text-zinc-500">STR</span>
+            <div className="h-1.5 w-1.5 rounded-full bg-[#38bdf8]" />
+            <span className="text-[8px] font-bold text-zinc-500">CLU</span>
           </div>
         </div>
       </div>

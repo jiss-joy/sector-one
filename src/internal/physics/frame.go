@@ -34,9 +34,10 @@ type Frame struct {
 	MaxRPM        float32    `json:"max_rpm"`
 	MaxLoad       float32    `json:"max_load"`
 	Source        string     `json:"source"`
+	Car           string     `json:"car"`
 }
 
-func FromCar(c acudp.CarInfo, source string, ts int64, spec CarSpec) Frame {
+func FromCar(c acudp.CarInfo, source string, ts int64, spec CarSpec, carName string) Frame {
 	return Frame{
 		TS:            ts,
 		SpeedKmh:      c.SpeedKmh,
@@ -67,5 +68,6 @@ func FromCar(c acudp.CarInfo, source string, ts int64, spec CarSpec) Frame {
 		MaxRPM:        spec.MaxRPM,
 		MaxLoad:       spec.MaxLoad,
 		Source:        source,
+		Car:           carName,
 	}
 }

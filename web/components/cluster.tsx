@@ -11,6 +11,7 @@ export function Cluster() {
   const gearRef = useRef<HTMLSpanElement>(null);
   const speedRef = useRef<HTMLSpanElement>(null);
   const rpmNumRef = useRef<HTMLSpanElement>(null);
+  const carRef = useRef<HTMLSpanElement>(null);
   const ledRefs = useRef<(HTMLDivElement | null)[]>([]);
   const limiterRef = useRef<HTMLDivElement>(null);
 
@@ -26,6 +27,9 @@ export function Cluster() {
     }
     if (rpmNumRef.current) {
       rpmNumRef.current.textContent = frame.rpm.toFixed(0);
+    }
+    if (carRef.current && frame.car) {
+      carRef.current.textContent = frame.car.replaceAll("_", " ");
     }
 
     // RPM LEDs
@@ -66,6 +70,10 @@ export function Cluster() {
 
   return (
     <div className="relative flex flex-col items-center gap-12 w-full max-w-2xl">
+      <span
+        ref={carRef}
+        className="text-[14px] font-bold uppercase tracking-[0.25em] text-zinc-500"
+      />
       {/* RPM LED Bar Section */}
       <div className="flex flex-col items-center gap-2">
         <div className="flex items-center gap-6">

@@ -28,6 +28,7 @@ export type Frame = {
   max_rpm: number;
   max_load: number;
   source: string;
+  car: string;
 };
 
 export type ConnectionState = "offline" | "online" | "error";

@@ -6,6 +6,7 @@ import { FrictionCircle } from "@/components/friction-circle";
 import { Laps } from "@/components/laps";
 import { Pedals } from "@/components/pedals";
 import { Cluster } from "@/components/cluster";
+import { Steer } from "@/components/steer";
 import { Traces } from "@/components/traces";
 import { Wheels } from "@/components/wheels";
 import { StatusBoxes } from "@/components/status-boxes";
@@ -25,19 +26,15 @@ export default function Home() {
       <div className="grid flex-1 grid-cols-1 gap-6 px-8 lg:grid-cols-[1fr_2fr_1fr]">
         {/* Left Column: Dynamics & Inputs */}
         <div className="flex flex-col justify-between gap-6 py-4">
-          <div className="space-y-8">
-            <FrictionCircle />
-            <div className="flex justify-center">
-              <StatusBoxes />
-            </div>
-          </div>
+          <FrictionCircle />
           <Wheels />
         </div>
 
         {/* Center Column: Primary Driving Cluster */}
         <div className="flex flex-col items-center justify-center gap-12 py-4">
           <Cluster />
-          <div className="w-full max-w-2xl">
+          <div className="flex w-full max-w-2xl flex-col gap-6">
+            <Steer />
             <Pedals />
           </div>
         </div>
@@ -45,6 +42,7 @@ export default function Home() {
         {/* Right Column: Performance & Timing */}
         <div className="flex flex-col justify-between gap-6 py-4">
           <div className="space-y-6">
+            <StatusBoxes />
             <Laps />
           </div>
           <div className="mt-auto h-48 rounded border border-white/5 bg-zinc-900/20 p-2 overflow-hidden">

@@ -28,14 +28,14 @@ export function StatusBoxes({ className }: { className?: string }) {
   );
 }
 
-function Box({ label, color, ref }: { label: string; color: string; ref: React.RefObject<HTMLDivElement> }) {
+function Box({ label, color, ref }: { label: string; color: string; ref: React.RefObject<HTMLDivElement | null> }) {
   return (
     <div
       ref={ref}
       className={`flex h-12 w-12 flex-col items-center justify-center rounded border border-white/5 ${color} opacity-10 data-[active=1]:opacity-100 transition-all duration-75 shadow-inner`}
     >
-      <span className="text-[9px] font-black text-white/90 leading-none mb-0.5">{label}</span>
-      <span className="text-lg font-black text-white leading-none">1</span>
+      <span className="mb-0.5 text-[9px] font-black leading-none text-white/90">{label}</span>
+      <span className="text-lg font-black leading-none text-white">1</span>
     </div>
   );
 }
