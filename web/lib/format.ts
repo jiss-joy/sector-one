@@ -1,4 +1,4 @@
-import { TELEMETRY_CONFIG } from "./constants";
+import { THRESHOLDS } from "./thresholds";
 
 export function getGearLabel(gear: number): string {
   if (gear === 0) return "R";
@@ -24,11 +24,11 @@ export const CORNERS = ["FL", "FR", "RL", "RR"] as const;
 
 export function isLocked(speedKmh: number, wheelRadS: number): boolean {
   return (
-    speedKmh > TELEMETRY_CONFIG.THRESHOLD_LOCK_MIN_SPEED &&
-    Math.abs(wheelRadS) < TELEMETRY_CONFIG.THRESHOLD_LOCK_WHEEL_RAD_S
+    speedKmh > THRESHOLDS.LOCK_MIN_SPEED_KMH &&
+    Math.abs(wheelRadS) < THRESHOLDS.LOCK_WHEEL_RAD_S
   );
 }
 
 export function isSlipping(slipRatio: number): boolean {
-  return Math.abs(slipRatio) > TELEMETRY_CONFIG.THRESHOLD_SLIP_RATIO;
+  return Math.abs(slipRatio) > THRESHOLDS.SLIP_RATIO;
 }
