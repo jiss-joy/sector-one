@@ -4,7 +4,7 @@ import { useRef } from "react";
 
 import { useHeartbeat } from "@/hooks/use-heartbeat";
 import { clamp01 } from "@/lib/format";
-import { forEachRing } from "@/lib/store";
+import { forEachRingBuffer } from "@/lib/store";
 import type { Frame } from "@/lib/types";
 
 function resize(canvas: HTMLCanvasElement) {
@@ -36,7 +36,7 @@ export function Traces() {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     let n = 0;
-    forEachRing(() => {
+    forEachRingBuffer(() => {
       n++;
     });
     if (n < 2) return;
@@ -55,7 +55,7 @@ export function Traces() {
       ctx.lineWidth = 1.25;
       ctx.lineJoin = "round";
       let i = 0;
-      forEachRing((f) => {
+      forEachRingBuffer((f) => {
         const x = (i / (n - 1)) * w;
         const y = (1 - ser.pick(f)) * h;
         if (i === 0) ctx.moveTo(x, y);

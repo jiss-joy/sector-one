@@ -1,77 +1,77 @@
-import type { Conn, Frame } from "@/lib/types";
+import type { Connection, Frame } from "@/lib/types";
 
 const RING_CAPACITY = 600;
 
-let latest: Frame | null = null;
-const ring: Array<Frame | undefined> = new Array(RING_CAPACITY);
-let len = 0;
+let latestFrame: Frame | null = null;
+const ringBuffer: Array<Frame | undefined> = new Array(RING_CAPACITY);
+let length = 0;
 let head = 0;
 
-let conn: Conn = { state: "down", source: "", subscribers: 0 };
+let connection: Connection = { state: "offline", source: "", subscribers: 0 };
 
-const connListeners = new Set<() => void>();
+const connectionListeners = new Set<() => void>();
 
-export function pushFrame(f: Frame) {
-  ring[head] = f;
+export function pushFrame(frame: Frame) {
+  ringBuffer[head] = frame;
   head = (head + 1) % RING_CAPACITY;
-  if (len < RING_CAPACITY) len++;
-  latest = f;
-  if (f.source && f.source !== conn.source) {
-    conn = { ...conn, source: f.source };
-    emitConn();
+  if (length < RING_CAPACITY) length++;
+  latestFrame = frame;
+  if (frame.source && frame.source !== connection.source) {
+    connection = { ...connection, source: frame.source };
+    emitConnection();
   }
 }
 
-export function getLatest(): Frame | null {
-  return latest;
+export function getLatestFrame(): Frame | null {
+  return latestFrame;
 }
 
-export function ringLength(): number {
-  return len;
+export function ringBufferLength(): number {
+  return length;
 }
 
 /** Oldest → newest. `fn` must not retain the frame past the call if you mutate later. */
-export function forEachRing(fn: (f: Frame, i: number) => void) {
-  const start = len < RING_CAPACITY ? 0 : head;
-  for (let i = 0; i < len; i++) {
-    const f = ring[(start + i) % RING_CAPACITY];
+export function forEachRingBuffer(fn: (f: Frame, i: number) => void) {
+  const start = length < RING_CAPACITY ? 0 : head;
+  for (let i = 0; i < length; i++) {
+    const f = ringBuffer[(start + i) % RING_CAPACITY];
     if (f) fn(f, i);
   }
 }
 
 export function lastN(n: number, out: Frame[]): number {
-  const take = Math.min(n, len);
-  const start = (len < RING_CAPACITY ? 0 : head) + (len - take);
+  const take = Math.min(n, length);
+  const start = (length < RING_CAPACITY ? 0 : head) + (length - take);
   for (let i = 0; i < take; i++) {
-    out[i] = ring[(start + i) % RING_CAPACITY]!;
+    out[i] = ringBuffer[(start + i) % RING_CAPACITY]!;
   }
   return take;
 }
 
-export function getConn(): Conn {
-  return conn;
+export function getConnection(): Connection {
+  return connection;
 }
 
-export function setConn(next: Partial<Conn>) {
-  const merged: Conn = { ...conn, ...next };
+export function setConnection(next: Partial<Connection>) {
+  const merged: Connection = { ...connection, ...next };
   if (
-    merged.state === conn.state &&
-    merged.source === conn.source &&
-    merged.subscribers === conn.subscribers
+    merged.state === connection.state &&
+    merged.source === connection.source &&
+    merged.subscribers === connection.subscribers
   ) {
     return;
   }
-  conn = merged;
-  emitConn();
+  connection = merged;
+  emitConnection();
 }
 
-export function subscribeConn(fn: () => void) {
-  connListeners.add(fn);
+export function subscribe(fn: () => void) {
+  connectionListeners.add(fn);
   return () => {
-    connListeners.delete(fn);
+    connectionListeners.delete(fn);
   };
 }
 
-function emitConn() {
-  for (const l of connListeners) l();
+function emitConnection() {
+  for (const listener of connectionListeners) listener();
 }

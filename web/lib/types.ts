@@ -30,10 +30,10 @@ export type Frame = {
   source: string;
 };
 
-export type ConnState = "down" | "open" | "error";
+export type ConnectionState = "offline" | "online" | "error";
 
-export type Conn = {
-  state: ConnState;
+export type Connection = {
+  state: ConnectionState;
   source: string;
   subscribers: number;
 };

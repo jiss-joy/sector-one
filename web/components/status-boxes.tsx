@@ -2,14 +2,14 @@
 
 import { useRef } from "react";
 import { useHeartbeat } from "@/hooks/use-heartbeat";
-import { getLatest } from "@/lib/store";
+import { getLatestFrame } from "@/lib/store";
 
-export function StatusBoxes() {
+export function StatusBoxes({ className }: { className?: string }) {
   const absRef = useRef<HTMLDivElement>(null);
   const tcRef = useRef<HTMLDivElement>(null);
 
   useHeartbeat(() => {
-    const f = getLatest();
+    const f = getLatestFrame();
     if (!f) return;
 
     if (absRef.current) {
@@ -21,7 +21,7 @@ export function StatusBoxes() {
   });
 
   return (
-    <div className="flex gap-2">
+    <div className={`flex gap-1.5 ${className}`}>
       <Box label="TC" color="bg-blue-600" ref={tcRef} />
       <Box label="ABS" color="bg-emerald-600" ref={absRef} />
     </div>
@@ -32,10 +32,10 @@ function Box({ label, color, ref }: { label: string; color: string; ref: React.R
   return (
     <div
       ref={ref}
-      className={`flex h-14 w-14 flex-col items-center justify-center rounded border border-white/10 ${color} opacity-20 data-[active=1]:opacity-100 transition-opacity duration-75`}
+      className={`flex h-12 w-12 flex-col items-center justify-center rounded border border-white/5 ${color} opacity-10 data-[active=1]:opacity-100 transition-all duration-75 shadow-inner`}
     >
-      <span className="text-[10px] font-bold text-white/80">{label}</span>
-      <span className="text-xl font-bold text-white">1</span>
+      <span className="text-[9px] font-black text-white/90 leading-none mb-0.5">{label}</span>
+      <span className="text-lg font-black text-white leading-none">1</span>
     </div>
   );
 }
