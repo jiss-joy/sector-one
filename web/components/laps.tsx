@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, type ReactNode } from "react";
+import { Ref, useRef, type ReactNode } from "react";
 
 import { useHeartbeat } from "@/hooks/use-heartbeat";
 import { formatLap } from "@/lib/format";
-import { getLatest } from "@/lib/store";
+import { getLatestFrame } from "@/lib/store";
 
 export function Laps() {
   const timeRef = useRef<HTMLSpanElement>(null);
@@ -15,7 +15,7 @@ export function Laps() {
   const pitRef = useRef<HTMLSpanElement>(null);
 
   useHeartbeat(() => {
-    const f = getLatest();
+    const f = getLatestFrame();
     if (!f) return;
     if (timeRef.current) timeRef.current.textContent = formatLap(f.lap_time_ms);
     if (lastRef.current) lastRef.current.textContent = formatLap(f.last_lap_ms);

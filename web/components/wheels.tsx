@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef } from "react";
+import { Ref, useRef } from "react";
 
 import { useHeartbeat } from "@/hooks/use-heartbeat";
 import { isLocked, isSlipping } from "@/lib/format";
-import { getLatest } from "@/lib/store";
+import { getLatestFrame } from "@/lib/store";
 
 function paintCorner(
   load: number,
@@ -43,7 +43,7 @@ export function Wheels() {
   const loadRR = useRef<HTMLSpanElement>(null);
 
   useHeartbeat(() => {
-    const f = getLatest();
+    const f = getLatestFrame();
     if (!f) return;
     const load = f.load_n ?? [0, 0, 0, 0];
     const slip = f.slip_ratio ?? [0, 0, 0, 0];
@@ -74,9 +74,9 @@ function MiniCorner({
   loadRef,
 }: {
   name: string;
-  barRef: React.RefObject<HTMLDivElement>;
-  flagRef: React.RefObject<HTMLSpanElement>;
-  loadRef: React.RefObject<HTMLSpanElement>;
+  barRef: Ref<HTMLDivElement>;
+  flagRef: Ref<HTMLSpanElement>;
+  loadRef: Ref<HTMLSpanElement>;
 }) {
   return (
     <div className="relative flex h-24 w-20 flex-col items-center justify-between rounded border border-white/5 bg-zinc-900/50 p-2 overflow-hidden">

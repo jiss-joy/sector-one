@@ -1,6 +1,6 @@
 import { TELEMETRY_CONFIG } from "./constants";
 
-export function gearLabel(gear: number): string {
+export function getGearLabel(gear: number): string {
   if (gear === 0) return "R";
   if (gear === 1) return "N";
   return String(gear - 1);
