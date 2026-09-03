@@ -29,6 +29,7 @@ func main() {
 	replayPath := flag.String("replay", "", "play a .bin instead of talking to AC")
 	replayRate := flag.Float64("replay-rate", 1.0, "replay speed multiplier")
 	httpAddr := flag.String("http", "127.0.0.1:8080", "HTTP listen address")
+	noTray := flag.Bool("no-tray", false, "run in the foreground without a system tray icon")
 	flag.Parse()
 
 	if *recordPath != "" && *replayPath != "" {
@@ -46,28 +47,51 @@ func main() {
 	sm := physics.NewSpecManager("cars.json")
 	startHTTP(*httpAddr, broadcaster, source)
 
-	if *replayPath != "" {
-		if err := runReplay(ctx, *replayPath, *replayRate, sm, broadcaster, source); err != nil && !errors.Is(err, context.Canceled) {
-			log.Fatal(err)
+	go func() {
+		if *replayPath != "" {
+			if err := runReplay(ctx, *replayPath, *replayRate, sm, broadcaster, source); err != nil && !errors.Is(err, context.Canceled) {
+				log.Println("replay:", err)
+			}
+			if *noTray {
+				cancel()
+			}
+			return
 		}
+
+		addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", acHost, acPort))
+		if err != nil {
+			log.Println("udp addr:", err)
+			cancel()
+			return
+		}
+		fmt.Println("Assetto Corsa address:", addr)
+
+		var rec *record.Writer
+		if *recordPath != "" {
+			rec, err = record.NewWriter(*recordPath)
+			if err != nil {
+				log.Println("record:", err)
+				cancel()
+				return
+			}
+			defer rec.Close()
+			log.Println("recording to:", *recordPath)
+		}
+
+		runLive(ctx, addr, rec, sm, broadcaster, source)
+		cancel()
+	}()
+
+	if *noTray {
+		openBrowser("http://" + *httpAddr)
+		<-ctx.Done()
 		return
 	}
 
-	addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", acHost, acPort))
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("Assetto Corsa address:", addr)
-
-	var rec *record.Writer
-	if *recordPath != "" {
-		rec, err = record.NewWriter(*recordPath)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer rec.Close()
-		log.Println("recording to:", *recordPath)
-	}
-
-	runLive(ctx, addr, rec, sm, broadcaster, source)
+	hideConsole()
+	go func() {
+		<-ctx.Done()
+		systrayQuit()
+	}()
+	runTray(*httpAddr, cancel)
 }
