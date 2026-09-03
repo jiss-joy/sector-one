@@ -37,6 +37,8 @@ type CarInfo struct {
 	WheelRadS      [4]float32
 	SlipRatio      [4]float32
 	LoadN          [4]float32
+	SlipAngle      [4]float32
+	NormalizedPos  float32
 }
 
 func ParseCarInfo(data []byte) (CarInfo, error) {
@@ -72,6 +74,8 @@ func ParseCarInfo(data []byte) (CarInfo, error) {
 		WheelRadS:      float32x4LE(data, 84),
 		SlipRatio:      float32x4LE(data, 132),
 		LoadN:          float32x4LE(data, 180),
+		SlipAngle:      float32x4LE(data, 100),
+		NormalizedPos:  float32LE(data, 308),
 	}, nil
 }
 

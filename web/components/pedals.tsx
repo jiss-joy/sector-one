@@ -1,49 +1,43 @@
 "use client";
 
-import { useRef, type Ref } from "react";
+import { Ref, useRef } from "react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useHeartbeat } from "@/hooks/use-heartbeat";
 import { clamp01 } from "@/lib/format";
-import { getLatest } from "@/lib/store";
+import { getLatestFrame } from "@/lib/store";
 
 export function Pedals() {
-  const thrBar = useRef<HTMLDivElement>(null);
-  const brkBar = useRef<HTMLDivElement>(null);
-  const cluBar = useRef<HTMLDivElement>(null);
-  const thrLbl = useRef<HTMLSpanElement>(null);
-  const brkLbl = useRef<HTMLSpanElement>(null);
-  const cluLbl = useRef<HTMLSpanElement>(null);
+  const throttleBar = useRef<HTMLDivElement>(null);
+  const brakeBar = useRef<HTMLDivElement>(null);
+  const clutchBar = useRef<HTMLDivElement>(null);
+  const throttleLabel = useRef<HTMLSpanElement>(null);
+  const brakeLabel = useRef<HTMLSpanElement>(null);
+  const clutchLabel = useRef<HTMLSpanElement>(null);
 
   useHeartbeat(() => {
-    const f = getLatest();
+    const f = getLatestFrame();
     if (!f) return;
     const t = clamp01(f.throttle);
     const b = clamp01(f.brake);
     const c = clamp01(f.clutch);
-    if (thrBar.current) thrBar.current.style.height = `${t * 100}%`;
-    if (brkBar.current) brkBar.current.style.height = `${b * 100}%`;
-    if (cluBar.current) cluBar.current.style.height = `${c * 100}%`;
-    if (thrLbl.current) thrLbl.current.textContent = t.toFixed(2);
-    if (brkLbl.current) brkLbl.current.textContent = b.toFixed(2);
-    if (cluLbl.current) cluLbl.current.textContent = c.toFixed(2);
+    if (throttleBar.current) throttleBar.current.style.height = `${t * 100}%`;
+    if (brakeBar.current) brakeBar.current.style.height = `${b * 100}%`;
+    if (clutchBar.current) clutchBar.current.style.height = `${c * 100}%`;
+    if (throttleLabel.current) throttleLabel.current.textContent = (t * 100).toFixed(0);
+    if (brakeLabel.current) brakeLabel.current.textContent = (b * 100).toFixed(0);
+    if (clutchLabel.current) clutchLabel.current.textContent = (c * 100).toFixed(0);
   });
 
   return (
-    <Card size="sm" className="h-full">
-      <CardHeader>
-        <CardTitle className="text-muted-foreground">Pedals</CardTitle>
-      </CardHeader>
-      <CardContent className="flex h-40 items-end justify-around gap-4">
-        <PedalCol barRef={thrBar} labelRef={thrLbl} name="throttle" color="bg-emerald-500" />
-        <PedalCol barRef={brkBar} labelRef={brkLbl} name="brake" color="bg-red-500" />
-        <PedalCol barRef={cluBar} labelRef={cluLbl} name="clutch" color="bg-sky-500" />
-      </CardContent>
-    </Card>
+    <div className="flex h-44 items-end justify-around gap-6">
+      <PedalBar barRef={clutchBar} labelRef={clutchLabel} name="clutch" color="bg-sky-500" />
+      <PedalBar barRef={brakeBar} labelRef={brakeLabel} name="brake" color="bg-red-500" />
+      <PedalBar barRef={throttleBar} labelRef={throttleLabel} name="throttle" color="bg-emerald-500" />
+    </div>
   );
 }
 
-function PedalCol({
+function PedalBar({
   barRef,
   labelRef,
   name,
@@ -55,17 +49,17 @@ function PedalCol({
   color: string;
 }) {
   return (
-    <div className="flex h-full flex-1 flex-col items-center gap-1">
+    <div className="flex h-full flex-1 flex-col items-center gap-2">
       <span
         ref={labelRef}
-        className="font-mono text-[10px] tabular-nums text-muted-foreground"
+        className="font-mono text-sm font-bold tabular-nums text-white/80"
       >
-        0.00
+        0
       </span>
-      <div className="relative w-full flex-1 overflow-hidden rounded-sm bg-muted">
-        <div ref={barRef} className={`absolute inset-x-0 bottom-0 ${color}`} />
+      <div className="relative w-full flex-1 overflow-hidden rounded-sm bg-zinc-800/50">
+        <div ref={barRef} className={`absolute inset-x-0 bottom-0 ${color} shadow-[0_0_10px_rgba(0,0,0,0.5)] transition-all duration-75`} />
       </div>
-      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+      <span className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase">
         {name}
       </span>
     </div>

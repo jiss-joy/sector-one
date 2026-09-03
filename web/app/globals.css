@@ -47,12 +47,25 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
   --animate-shiny-text: shiny-text 8s infinite;
+  --animate-rev-limiter: rev-limiter 0.08s infinite;
   @keyframes shiny-text {
-  0%, 90%, 100% {
-    background-position: calc(-100% - var(--shiny-width)) 0;
+    0%, 90%, 100% {
+      background-position: calc(-100% - var(--shiny-width)) 0;
     }
-  30%, 60% {
-    background-position: calc(100% + var(--shiny-width)) 0;
+    30%, 60% {
+      background-position: calc(100% + var(--shiny-width)) 0;
+    }
+  }
+  @keyframes rev-limiter {
+    0%, 100% { 
+      opacity: 1; 
+      filter: brightness(2) saturate(1.5); 
+      transform: scale(1.1);
+    }
+    50% { 
+      opacity: 0.1; 
+      filter: brightness(0.2); 
+      transform: scale(0.9);
     }
   }
 }
@@ -98,7 +111,7 @@
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
+  --popover-foreground: oklch(0.985 0.985 0);
   --primary: oklch(0.922 0 0);
   --primary-foreground: oklch(0.205 0 0);
   --secondary: oklch(0.269 0 0);

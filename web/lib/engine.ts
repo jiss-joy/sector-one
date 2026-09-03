@@ -1,17 +1,17 @@
-import { pushFrame, setConn } from "@/lib/store";
+import { pushFrame, setConnection } from "@/lib/store";
 import type { Frame } from "@/lib/types";
 
-export const ENGINE = "";
+export const ENGINE = "http://127.0.0.1:8080";
 
 export function connectEngine(): () => void {
   const eventSource = new EventSource(`${ENGINE}/api/telemetry`);
 
   eventSource.onopen = () => {
-    setConn({ state: "open" });
+    setConnection({ state: "online" });
   };
 
   eventSource.onerror = () => {
-    setConn({ state: "error" });
+    setConnection({ state: "offline" });
   };
 
   eventSource.onmessage = (ev) => {
@@ -30,7 +30,7 @@ export function connectEngine(): () => void {
   return () => {
     eventSource.close();
     window.clearInterval(poll);
-    setConn({ state: "down", subscribers: 0 });
+    setConnection({ state: "offline", subscribers: 0 });
   };
 }
 
@@ -38,18 +38,19 @@ async function fetchHealth() {
   try {
     const res = await fetch(`${ENGINE}/api/health`);
     if (!res.ok) {
-      setConn({ state: "error" });
+      setConnection({ state: "error" });
       return;
     }
     const j = (await res.json()) as {
       source?: string;
       subscribers?: number;
     };
-    setConn({
+    setConnection({
+      state: "online",
       source: j.source ?? "",
       subscribers: typeof j.subscribers === "number" ? j.subscribers : 0,
     });
   } catch {
-    setConn({ state: "error" });
+    setConnection({ state: "offline" });
   }
 }

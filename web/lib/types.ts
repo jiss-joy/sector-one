@@ -22,16 +22,19 @@ export type Frame = {
   engine_limiter: boolean;
   wheel_rad_s: [number, number, number, number];
   slip_ratio: [number, number, number, number];
+  slip_angle: [number, number, number, number];
+  normalized_pos: number;
   load_n: [number, number, number, number];
   max_rpm: number;
   max_load: number;
   source: string;
+  car: string;
 };
 
-export type ConnState = "down" | "open" | "error";
+export type ConnectionState = "offline" | "online" | "error";
 
-export type Conn = {
-  state: ConnState;
+export type Connection = {
+  state: ConnectionState;
   source: string;
   subscribers: number;
 };
