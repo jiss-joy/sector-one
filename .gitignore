@@ -4,4 +4,6 @@ web/node_modules
 web/.next
 web/out
 src/ui/public
+ui/public
 cars.json
+sector-one

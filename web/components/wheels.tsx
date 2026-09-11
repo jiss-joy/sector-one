@@ -60,7 +60,7 @@ function paintSpark(canvas: HTMLCanvasElement | null, n: number, corner: number)
   ctx.lineJoin = "round";
   for (let i = 0; i < n; i++) {
     const x = (i / (n - 1)) * w;
-    const y = (1 - Math.min(1, sparkScratch[i].load_n[corner] / THRESHOLDS.LOAD_BAR_N)) * h;
+    const y = (1 - Math.min(1, sparkScratch[i].tyre_load[corner] / THRESHOLDS.LOAD_BAR_N)) * h;
     if (i === 0) ctx.moveTo(x, y);
     else ctx.lineTo(x, y);
   }
@@ -88,9 +88,9 @@ export function Wheels() {
   useHeartbeat(() => {
     const f = getLatestFrame();
     if (!f) return;
-    const load = f.load_n ?? [0, 0, 0, 0];
+    const load = f.tyre_load ?? [0, 0, 0, 0];
     const slip = f.slip_ratio ?? [0, 0, 0, 0];
-    const wh = f.wheel_rad_s ?? [0, 0, 0, 0];
+    const wh = f.wheel_speed ?? [0, 0, 0, 0];
     paintCorner(load[0], slip[0], wh[0], f.speed_kmh, barFL.current, flagFL.current, loadFL.current);
     paintCorner(load[1], slip[1], wh[1], f.speed_kmh, barFR.current, flagFR.current, loadFR.current);
     paintCorner(load[2], slip[2], wh[2], f.speed_kmh, barRL.current, flagRL.current, loadRL.current);

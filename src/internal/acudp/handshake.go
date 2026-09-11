@@ -8,22 +8,22 @@ import (
 )
 
 const (
-	OpHandshake        int32 = 0
-	OpSubscribeUpdate  int32 = 1
-	OpSubscribeSpot    int32 = 2
-	OpDismiss          int32 = 3
-	HandshakeSize            = 12
-	DefaultIdentifier  int32 = 0
-	DefaultVersion     int32 = 1
+	OpHandshake       int32 = 0
+	OpSubscribeUpdate int32 = 1
+	OpSubscribeSpot   int32 = 2
+	OpDismiss         int32 = 3
+	HandshakeSize           = 12
+	DefaultIdentifier int32 = 0
+	DefaultVersion    int32 = 1
 )
 
 type SessionInfo struct {
-	CarName      string
-	DriverName   string
-	TrackName    string
-	TrackConfig  string
-	Identifier   int32
-	Version      int32
+	CarName     string
+	DriverName  string
+	TrackName   string
+	TrackConfig string
+	Identifier  int32
+	Version     int32
 }
 
 // EncodeHandshake builds the 12-byte packet AC expects: three little-endian int32s.
@@ -43,6 +43,9 @@ func ParseHandshakeResponse(data []byte) (SessionInfo, error) {
 	}
 
 	// Four UTF-16LE strings + two int32s. n is bytes per name field.
+	// byte 0                                                    byte 407
+	// |---- car ----|---- driver ----|-- id --|-- ver --|---- track ----|---- config ----|
+	//  100 bytes       100 bytes      4 B      4 B        100 bytes        100 bytes
 	n := (len(data) - 8) / 4
 	carEnd := n
 	drvEnd := 2 * n

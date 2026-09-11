@@ -7,10 +7,10 @@ import (
 )
 
 const (
-	Version uint32 = 1
+	Version    uint32 = 1
 	KindHello  uint8  = 1
 	KindCar    uint8  = 2
-	maxPayload = 64 * 1024
+	maxPayload        = 64 * 1024
 )
 
 var magic = [8]byte{'S', '1', 'R', 'E', 'C', 0, 0, 1}

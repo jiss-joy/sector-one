@@ -3,7 +3,7 @@ package stream
 import "sync"
 
 type Broadcaster struct {
-	mu   sync.Mutex
+	mu          sync.Mutex
 	subscribers map[chan []byte]struct{}
 }
 
