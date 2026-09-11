@@ -15,8 +15,8 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version-file: src/go.mod
-          cache-dependency-path: src/go.sum
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -30,13 +30,13 @@ jobs:
 
       - name: Embed UI into engine
         run: |
-          rm -rf src/ui/public
-          mkdir -p src/ui/public
-          cp -r web/out/. src/ui/public/
+          rm -rf ui/public
+          mkdir -p ui/public
+          cp -r web/out/. ui/public/
 
       - name: Build Windows exe
-        working-directory: src
-        run: GOOS=windows GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o sector-one.exe ./cmd/engine
+        working-directory: .
+        run: GOOS=windows GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o sector-one.exe ./cmd/sector-one
 
       - name: Publish latest release
         uses: softprops/action-gh-release@v2
@@ -44,6 +44,6 @@ jobs:
           tag_name: latest
           name: latest
           body: Windows build from ${{ github.sha }}
-          files: src/sector-one.exe
+          files: sector-one.exe
           fail_on_unmatched_files: true
           make_latest: true

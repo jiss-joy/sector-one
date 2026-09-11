@@ -13,4 +13,8 @@ rm -rf "$ROOT/ui/public"
 mkdir -p "$ROOT/ui/public"
 cp -r "$ROOT/web/out/"* "$ROOT/ui/public/"
 
+echo "--- Building sector one ---"
+cd "$ROOT"
+go build -o sector-one ./cmd/sector-one
+
 echo "--- Done! Created ./sector-one ---"

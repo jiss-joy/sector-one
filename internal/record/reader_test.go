@@ -16,10 +16,10 @@ func TestReaderFile(t *testing.T) {
 	}
 	hello := bytes.Repeat([]byte{1}, 408)
 	car := bytes.Repeat([]byte{'a'}, 328)
-	if err := wr.Write(KindHello, hello); err != nil {
+	if err := wr.Write(KindHandshake, hello); err != nil {
 		t.Fatal(err)
 	}
-	if err := wr.Write(KindCar, car); err != nil {
+	if err := wr.Write(KindCarInfo, car); err != nil {
 		t.Fatal(err)
 	}
 	if err := wr.Close(); err != nil {
@@ -36,14 +36,14 @@ func TestReaderFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if r1.Kind != KindHello || !bytes.Equal(r1.Payload, hello) {
+	if r1.Kind != KindHandshake || !bytes.Equal(r1.Payload, hello) {
 		t.Fatalf("hello: %+v", r1)
 	}
 	r2, err := rd.Next()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if r2.Kind != KindCar || !bytes.Equal(r2.Payload, car) {
+	if r2.Kind != KindCarInfo || !bytes.Equal(r2.Payload, car) {
 		t.Fatalf("car: %+v", r2)
 	}
 	if _, err := rd.Next(); err != io.EOF {
