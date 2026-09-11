@@ -1,3 +1,14 @@
 {
-  "cSpell.words": ["acudp", "Assetto", "Corsa", "fyne", "rundll", "systray"]
+  "cSpell.words": [
+    "acudp",
+    "Assetto",
+    "Corsa",
+    "fyne",
+    "GOARCH",
+    "ldflags",
+    "rundll",
+    "softprops",
+    "systray",
+    "trimpath"
+  ]
 }

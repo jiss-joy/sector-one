@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-
 	"sector-one/internal/acudp"
 	"sector-one/internal/physics"
 	"sector-one/internal/stream"
@@ -12,37 +11,33 @@ import (
 )
 
 func startHTTP(addr string, broadcaster *stream.Broadcaster, source string) {
-	apiHandler := stream.Handler(broadcaster, func() map[string]any {
-		return map[string]any{
-			"ok":          true,
-			"source":      source,
-			"subscribers": broadcaster.Subscribers(),
-		}
-	})
-
-	staticHandler := ui.Handler()
+	apiHandler := stream.Handler(broadcaster, source)
+	uiHandler := ui.Handler()
 
 	mux := http.NewServeMux()
 	mux.Handle("/api/", apiHandler)
-	mux.Handle("/", staticHandler)
+	mux.Handle("/", uiHandler)
 
-	srv := &http.Server{
+	server := &http.Server{
 		Addr:    addr,
 		Handler: mux,
 	}
+
 	go func() {
-		log.Println("engine listening on", srv.Addr)
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Println("http:", err)
+		log.Println("sector-one engine listening on:", server.Addr)
+		err := server.ListenAndServe()
+		if err != nil && err != http.ErrServerClosed {
+			log.Println("http: ", err)
 		}
 	}()
 }
 
 func publishCar(sm *physics.SpecManager, broadcaster *stream.Broadcaster, car acudp.CarInfo, source string, ts int64, carName string) {
 	spec := sm.Get(carName)
-	b, err := json.Marshal(physics.FromCar(car, source, ts, spec, carName))
+	frame := physics.FromCar(car, source, ts, spec, carName)
+	bytes, err := json.Marshal(frame)
 	if err != nil {
 		return
 	}
-	broadcaster.Publish(b)
+	broadcaster.Publish(bytes)
 }

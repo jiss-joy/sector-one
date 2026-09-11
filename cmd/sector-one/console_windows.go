@@ -7,9 +7,9 @@ import "golang.org/x/sys/windows"
 func hideConsole() {
 	kernel32 := windows.NewLazySystemDLL("kernel32.dll")
 	user32 := windows.NewLazySystemDLL("user32.dll")
-	hwnd, _, _ := kernel32.NewProc("GetConsoleWindow").Call()
-	if hwnd == 0 {
+	windowHandle, _, _ := kernel32.NewProc("GetConsoleWindow").Call()
+	if windowHandle == 0 {
 		return
 	}
-	user32.NewProc("ShowWindow").Call(hwnd, 0) // SW_HIDE
+	user32.NewProc("ShowWindow").Call(windowHandle, 0) // SW_HIDE
 }

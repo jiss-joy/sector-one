@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -17,24 +16,18 @@ import (
 )
 
 const (
-	retryEvery   = 2 * time.Second
-	maxReplayGap = 200 * time.Millisecond
-	logEvery     = 2 * time.Second
-	acHost       = "127.0.0.1"
-	acPort       = 9996
+	RetryEvery = 2 * time.Second
+	LogEvery   = 2 * time.Second
+	ACHost     = "127.0.0.1"
+	ACPort     = 9996
 )
 
 func main() {
-	recordPath := flag.String("record", "", "write framed session to this .bin")
-	replayPath := flag.String("replay", "", "play a .bin instead of talking to AC")
-	replayRate := flag.Float64("replay-rate", 1.0, "replay speed multiplier")
+	replayPath := flag.String("replay", "", "Load a .bin file instead of live data")
+	recordPath := flag.String("record", "", "Write framed session to this .bin")
+	replayRate := flag.Float64("replay-rate", 1.0, "Replay speed multiplier")
 	httpAddr := flag.String("http", "127.0.0.1:8080", "HTTP listen address")
-	noTray := flag.Bool("no-tray", false, "run in the foreground without a system tray icon")
 	flag.Parse()
-
-	if *recordPath != "" && *replayPath != "" {
-		log.Fatal("use --record or --replay, not both")
-	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
@@ -49,22 +42,20 @@ func main() {
 
 	go func() {
 		if *replayPath != "" {
-			if err := runReplay(ctx, *replayPath, *replayRate, sm, broadcaster, source); err != nil && !errors.Is(err, context.Canceled) {
-				log.Println("replay:", err)
-			}
-			if *noTray {
-				cancel()
+			err := runReplay(ctx, *replayPath, *replayRate, sm, broadcaster)
+			if err != nil {
+				log.Println("Error finding file", err)
 			}
 			return
 		}
 
-		addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", acHost, acPort))
+		addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", ACHost, ACPort))
 		if err != nil {
-			log.Println("udp addr:", err)
+			log.Println("UDP Addr: ", err)
 			cancel()
 			return
 		}
-		fmt.Println("Assetto Corsa address:", addr)
+		fmt.Println("Assetto Corsa Address: ", addr)
 
 		var rec *record.Writer
 		if *recordPath != "" {
@@ -77,21 +68,18 @@ func main() {
 			defer rec.Close()
 			log.Println("recording to:", *recordPath)
 		}
-
 		runLive(ctx, addr, rec, sm, broadcaster, source)
 		cancel()
 	}()
 
-	if *noTray {
-		openBrowser("http://" + *httpAddr)
-		<-ctx.Done()
-		return
-	}
-
+	openBrowser("http://" + *httpAddr)
 	hideConsole()
+
 	go func() {
 		<-ctx.Done()
 		systrayQuit()
 	}()
+
 	runTray(*httpAddr, cancel)
+	<-ctx.Done()
 }

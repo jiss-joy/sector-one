@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"time"
-
 	"sector-one/internal/acudp"
 	"sector-one/internal/record"
+	"time"
 )
 
 func logCar(car acudp.CarInfo, lastLog *time.Time, packets *int) {
@@ -16,7 +15,7 @@ func logCar(car acudp.CarInfo, lastLog *time.Time, packets *int) {
 	}
 	*packets++
 	elapsed := time.Since(*lastLog)
-	if elapsed < logEvery {
+	if elapsed < LogEvery {
 		return
 	}
 	hz := float64(*packets) / elapsed.Seconds()
@@ -27,21 +26,23 @@ func logCar(car acudp.CarInfo, lastLog *time.Time, packets *int) {
 }
 
 func sleep(ctx context.Context, duration time.Duration) error {
-	t := time.NewTimer(duration)
-	defer t.Stop()
+	timer := time.NewTimer(duration)
+	defer timer.Stop()
+
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
-	case <-t.C:
+	case <-timer.C:
 		return nil
 	}
 }
 
-func writeRec(rec *record.Writer, kind uint8, payload []byte) {
-	if rec == nil {
+func writeRecord(record *record.Writer, kind uint8, payload []byte) {
+	if record == nil {
 		return
 	}
-	if err := rec.Write(kind, payload); err != nil {
-		log.Println("record write:", err)
+	err := record.Write(kind, payload)
+	if err != nil {
+		log.Println("Record write error: ", err)
 	}
 }
