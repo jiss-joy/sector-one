@@ -47,9 +47,9 @@ One 16:9 screen.
 
 - **Center:** car name, 20 LED RPM bar (limiter dot at 98% of `max_rpm`), gear + speed, steer bar, clutch / brake / throttle
 - **Left:** friction circle (1G / 2G, faded tail), tyre load + LOCK / SLIP
-- **Right:** TC / ABS as dim / armed / in-action (booleans only — the UDP packet has no click counts), laps + pit, pedal traces (index on X, not time)
+- **Right:** TC / ABS as dim / armed / in-action (booleans only — the UDP packet has no click counts), last 5 completed laps (driver, time, gap vs previous lap) + pit, pedal traces (index on X, not time)
 
-Tyre temperatures, fuel, and a track map are **not** in this version. They are not in `RTCarInfo`.
+Tyre temperatures, air / tarmac temp, compound (soft/medium/hard), fuel, and a track map are **not** in this version. They are not in `RTCarInfo`.
 
 ## See it / try it
 

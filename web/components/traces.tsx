@@ -4,8 +4,11 @@ import { useRef } from "react";
 
 import { useHeartbeat } from "@/hooks/use-heartbeat";
 import { clamp01 } from "@/lib/format";
-import { forEachRingBuffer } from "@/lib/store";
+import { lastN } from "@/lib/store";
+import { THRESHOLDS } from "@/lib/thresholds";
 import type { Frame } from "@/lib/types";
+
+const scratch: Frame[] = new Array(THRESHOLDS.TRACE_HISTORY_COUNT);
 
 function resize(canvas: HTMLCanvasElement) {
   const dpr = window.devicePixelRatio || 1;
@@ -33,10 +36,7 @@ export function Traces() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    let n = 0;
-    forEachRingBuffer(() => {
-      n++;
-    });
+    const n = lastN(THRESHOLDS.TRACE_HISTORY_COUNT, scratch);
     if (n < 2) return;
 
     ctx.strokeStyle = "rgba(255,255,255,0.05)";
@@ -63,14 +63,12 @@ export function Traces() {
       ctx.strokeStyle = ser.stroke;
       ctx.lineWidth = 1.25;
       ctx.lineJoin = "round";
-      let i = 0;
-      forEachRingBuffer((f) => {
+      for (let i = 0; i < n; i++) {
         const x = (i / (n - 1)) * w;
-        const y = (1 - ser.pick(f)) * h;
+        const y = (1 - ser.pick(scratch[i])) * h;
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
-        i++;
-      });
+      }
       ctx.stroke();
     }
   });

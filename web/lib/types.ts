@@ -29,6 +29,15 @@ export type Frame = {
   max_load: number;
   source: string;
   car: string;
+  driver: string;
+};
+
+export type CompletedLap = {
+  lap: number;
+  timeMs: number;
+  /** Delta vs the previous completed lap. Null on the first stored row. */
+  gapMs: number | null;
+  driver: string;
 };
 
 export type ConnectionState = "offline" | "online" | "error";

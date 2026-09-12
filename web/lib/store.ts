@@ -1,6 +1,8 @@
-import type { Connection, Frame } from "@/lib/types";
+import type { CompletedLap, Connection, Frame } from "@/lib/types";
 
-const RING_CAPACITY = 600;
+const MAX_COMPLETED_LAPS = 5;
+
+const RING_CAPACITY = 900;
 
 let latestFrame: Frame | null = null;
 const ringBuffer: Array<Frame | undefined> = new Array(RING_CAPACITY);
@@ -11,15 +13,65 @@ let connection: Connection = { state: "offline", source: "", subscribers: 0 };
 
 const connectionListeners = new Set<() => void>();
 
+const completedLaps: CompletedLap[] = [];
+let lastSeenLastLapMs = 0;
+let lastSeenLapCount = -1;
+let historyKey = "";
+
 export function pushFrame(frame: Frame) {
   ringBuffer[head] = frame;
   head = (head + 1) % RING_CAPACITY;
   if (length < RING_CAPACITY) length++;
   latestFrame = frame;
+  noteCompletedLap(frame);
   if (frame.source && frame.source !== connection.source) {
     connection = { ...connection, source: frame.source };
     emitConnection();
   }
+}
+
+function noteCompletedLap(frame: Frame) {
+  const key = `${frame.source}\0${frame.car}`;
+  if (key !== historyKey) {
+    historyKey = key;
+    completedLaps.length = 0;
+    lastSeenLastLapMs = 0;
+    lastSeenLapCount = -1;
+  }
+  if (frame.lap_count >= 0 && lastSeenLapCount >= 0 && frame.lap_count < lastSeenLapCount) {
+    completedLaps.length = 0;
+    lastSeenLastLapMs = 0;
+  }
+  lastSeenLapCount = frame.lap_count;
+
+  if (frame.last_lap_ms <= 0 || frame.last_lap_ms === lastSeenLastLapMs) {
+    return;
+  }
+
+  const gapMs = lastSeenLastLapMs > 0 ? frame.last_lap_ms - lastSeenLastLapMs : null;
+  lastSeenLastLapMs = frame.last_lap_ms;
+  const lap = frame.lap_count > 0 ? frame.lap_count - 1 : completedLaps.length + 1;
+  completedLaps.push({
+    lap,
+    timeMs: frame.last_lap_ms,
+    gapMs,
+    driver: frame.driver ?? "",
+  });
+  if (completedLaps.length > MAX_COMPLETED_LAPS) {
+    completedLaps.shift();
+  }
+}
+
+/** Oldest → newest, at most 5. */
+export function getCompletedLaps(): readonly CompletedLap[] {
+  return completedLaps;
+}
+
+export function resetCompletedLaps() {
+  completedLaps.length = 0;
+  lastSeenLastLapMs = 0;
+  lastSeenLapCount = -1;
+  historyKey = "";
 }
 
 export function getLatestFrame(): Frame | null {

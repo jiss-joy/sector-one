@@ -104,7 +104,7 @@ func runLive(ctx context.Context, addr *net.UDPAddr, rec *record.Writer, sm *phy
 			}
 			sm.Update(session.CarName, car.EngineRPM, maxLoad, car.EngineLimiter)
 
-			publishCar(sm, broadcaster, car, source, time.Now().UnixMilli(), session.CarName)
+			publishCar(sm, broadcaster, car, source, time.Now().UnixMilli(), session.CarName, session.DriverName)
 		}
 		dismiss(connection)
 		connection.Close()

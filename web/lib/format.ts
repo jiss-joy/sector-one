@@ -14,6 +14,12 @@ export function formatLap(ms: number): string {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}.${String(frac).padStart(3, "0")}`;
 }
 
+export function formatGap(ms: number | null): string {
+  if (ms === null) return "—";
+  const sign = ms > 0 ? "+" : "";
+  return `${sign}${(ms / 1000).toFixed(3)}`;
+}
+
 export function clamp01(v: number): number {
   if (v < 0) return 0;
   if (v > 1) return 1;

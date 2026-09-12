@@ -1,98 +1,126 @@
 "use client";
 
-import { Ref, useRef, type ReactNode } from "react";
+import { Ref, useRef } from "react";
 
 import { useHeartbeat } from "@/hooks/use-heartbeat";
-import { formatLap } from "@/lib/format";
-import { getLatestFrame } from "@/lib/store";
+import { formatGap, formatLap } from "@/lib/format";
+import { getCompletedLaps, getLatestFrame } from "@/lib/store";
+
+const ROW_COUNT = 5;
 
 export function Laps() {
-  const timeRef = useRef<HTMLSpanElement>(null);
-  const lastRef = useRef<HTMLSpanElement>(null);
-  const bestRef = useRef<HTMLSpanElement>(null);
-  const countRef = useRef<HTMLSpanElement>(null);
-  const deltaRef = useRef<HTMLSpanElement>(null);
+  const timeRef = useRef<HTMLDivElement>(null);
+  const bestRef = useRef<HTMLDivElement>(null);
   const pitRef = useRef<HTMLSpanElement>(null);
+  const headRef = useRef<HTMLTableSectionElement>(null);
+  const rowRefs = useRef<(HTMLTableRowElement | null)[]>([]);
+  const lapRefs = useRef<(HTMLTableCellElement | null)[]>([]);
+  const driverRefs = useRef<(HTMLTableCellElement | null)[]>([]);
+  const timeRefs = useRef<(HTMLTableCellElement | null)[]>([]);
+  const gapRefs = useRef<(HTMLTableCellElement | null)[]>([]);
 
   useHeartbeat(() => {
     const f = getLatestFrame();
-    if (!f) return;
-    if (timeRef.current) timeRef.current.textContent = formatLap(f.lap_time_ms);
-    if (lastRef.current) lastRef.current.textContent = formatLap(f.last_lap_ms);
-    if (bestRef.current) bestRef.current.textContent = formatLap(f.best_lap_ms);
-    if (countRef.current) countRef.current.textContent = String(f.lap_count);
-    if (deltaRef.current) {
-      if (f.last_lap_ms > 0 && f.best_lap_ms > 0) {
-        const d = f.last_lap_ms - f.best_lap_ms;
-        const sign = d > 0 ? "+" : "";
-        deltaRef.current.textContent = `${sign}${(d / 1000).toFixed(3)}`;
-        deltaRef.current.className = `font-mono tabular-nums ${
-          d > 0 ? "text-red-400" : d < 0 ? "text-emerald-400" : ""
-        }`;
-      } else {
-        deltaRef.current.textContent = "—";
-        deltaRef.current.className = "font-mono tabular-nums text-muted-foreground";
-      }
+    if (f) {
+      if (timeRef.current) timeRef.current.textContent = formatLap(f.lap_time_ms);
+      if (bestRef.current) bestRef.current.textContent = formatLap(f.best_lap_ms);
+      if (pitRef.current) pitRef.current.dataset.active = f.in_pit ? "1" : "0";
     }
-    if (pitRef.current) {
-      pitRef.current.dataset.active = f.in_pit ? "1" : "0";
+
+    const laps = getCompletedLaps();
+    if (headRef.current) {
+      headRef.current.hidden = laps.length === 0;
+    }
+    for (let i = 0; i < ROW_COUNT; i++) {
+      const row = laps[laps.length - 1 - i];
+      const empty = !row;
+      if (rowRefs.current[i]) rowRefs.current[i]!.hidden = empty;
+      if (lapRefs.current[i]) lapRefs.current[i]!.textContent = empty ? "" : String(row.lap);
+      if (driverRefs.current[i]) driverRefs.current[i]!.textContent = empty ? "" : row.driver || "—";
+      if (timeRefs.current[i]) timeRefs.current[i]!.textContent = empty ? "" : formatLap(row.timeMs);
+      if (gapRefs.current[i]) {
+        const el = gapRefs.current[i]!;
+        el.textContent = empty ? "" : formatGap(row.gapMs);
+        el.className = gapClass(empty ? null : row.gapMs);
+      }
     }
   });
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2 rounded border border-white/5 bg-zinc-900/40 p-4">
-        <span className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Timing</span>
-        <div className="space-y-1">
-          <Row label="current">
-            <span ref={timeRef} className="font-mono text-xl tabular-nums text-white">
-              --:--.---
-            </span>
-          </Row>
-          <Row label="delta">
-            <span ref={deltaRef} className="font-mono text-lg tabular-nums text-muted-foreground">
-              —
-            </span>
-          </Row>
-          <Row label="last">
-            <span ref={lastRef} className="font-mono tabular-nums">
-              --:--.---
-            </span>
-          </Row>
-          <Row label="best">
-            <span ref={bestRef} className="font-mono tabular-nums text-emerald-400/80">
-              --:--.---
-            </span>
-          </Row>
+    <div className="flex flex-col gap-3">
+      <div className="flex items-end justify-between gap-3 px-0.5">
+        <div>
+          <span className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Current</span>
+          <div ref={timeRef} className="font-mono text-xl tabular-nums text-white">
+            --:--.---
+          </div>
         </div>
-      </div>
-      
-      <div className="flex items-center justify-between px-2">
-        <div className="flex flex-col">
-          <span className="text-[8px] font-bold text-zinc-500 uppercase">Lap</span>
-          <span ref={countRef} className="font-mono text-2xl font-bold text-white">0</span>
+        <div className="text-right">
+          <span className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Best</span>
+          <div ref={bestRef} className="font-mono text-sm tabular-nums text-emerald-400/80">
+            --:--.---
+          </div>
         </div>
         <Light ref={pitRef} label="PIT" />
       </div>
+
+      <table className="w-full border-collapse text-left">
+        <caption className="sr-only">Last five completed laps, gap versus previous lap</caption>
+        <thead ref={headRef} hidden>
+          <tr className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">
+            <th className="pb-1 pr-2 font-bold">Lap</th>
+            <th className="pb-1 pr-2 font-bold">Driver</th>
+            <th className="pb-1 pr-2 font-bold">Time</th>
+            <th className="pb-1 font-bold text-right">Gap</th>
+          </tr>
+        </thead>
+        <tbody className="font-mono text-sm tabular-nums">
+          {Array.from({ length: ROW_COUNT }, (_, i) => (
+            <tr
+              key={i}
+              ref={(el) => {
+                rowRefs.current[i] = el;
+              }}
+              hidden
+              className="border-t border-white/5"
+            >
+              <td
+                ref={(el) => {
+                  lapRefs.current[i] = el;
+                }}
+                className="py-1 pr-2 text-zinc-400"
+              />
+              <td
+                ref={(el) => {
+                  driverRefs.current[i] = el;
+                }}
+                className="max-w-[7rem] truncate py-1 pr-2 text-zinc-300"
+              />
+              <td
+                ref={(el) => {
+                  timeRefs.current[i] = el;
+                }}
+                className="py-1 pr-2 text-white"
+              />
+              <td
+                ref={(el) => {
+                  gapRefs.current[i] = el;
+                }}
+                className="py-1 text-right text-zinc-500"
+              />
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
 
-function Row({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="flex items-baseline justify-between gap-4">
-      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-        {label}
-      </span>
-      {children}
-    </div>
-  );
+function gapClass(ms: number | null): string {
+  const base = "py-1 text-right tabular-nums";
+  if (ms === null || ms === 0) return `${base} text-zinc-500`;
+  if (ms < 0) return `${base} text-emerald-400`;
+  return `${base} text-red-400`;
 }
 
 function Light({

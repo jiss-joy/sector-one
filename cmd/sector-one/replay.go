@@ -27,6 +27,7 @@ func runReplay(ctx context.Context, path string, replayRate float64, sm *physics
 
 	var prev int64
 	carName := "Unknown Vehicle"
+	driverName := ""
 
 	for {
 		if ctx.Err() != nil {
@@ -48,27 +49,28 @@ func runReplay(ctx context.Context, path string, replayRate float64, sm *physics
 
 		switch rec.Kind {
 		case record.KindHandshake:
-			handleKindHandshake(rec.Payload, &carName)
+			handleKindHandshake(rec.Payload, &carName, &driverName)
 		case record.KindCarInfo:
-			handleKindCarInfo(rec.Payload, sm, broadcaster, carName, rec)
+			handleKindCarInfo(rec.Payload, sm, broadcaster, carName, driverName, rec)
 		default:
 			log.Printf("replay: unknown kind %d, skipping", rec.Kind)
 		}
 	}
 }
 
-func handleKindHandshake(payload []byte, carName *string) {
+func handleKindHandshake(payload []byte, carName, driverName *string) {
 	session, err := acudp.ParseHandshakeResponse(payload)
 	if err != nil {
 		log.Println("[replay] handshake error: ", err)
 		return
 	}
 	*carName = session.CarName
+	*driverName = session.DriverName
 	fmt.Printf("car=%q driver=%q track=%q config=%q\n",
 		session.CarName, session.DriverName, session.TrackName, session.TrackConfig)
 }
 
-func handleKindCarInfo(payload []byte, sm *physics.SpecManager, broadcaster *stream.Broadcaster, carName string, rec record.Record) {
+func handleKindCarInfo(payload []byte, sm *physics.SpecManager, broadcaster *stream.Broadcaster, carName, driverName string, rec record.Record) {
 	car, err := acudp.ParseCarInfo(payload)
 	if err != nil {
 		log.Println("[replay] parsing error: ", err)
@@ -85,7 +87,7 @@ func handleKindCarInfo(payload []byte, sm *physics.SpecManager, broadcaster *str
 	source := "replay"
 	sm.Update(carName, car.EngineRPM, maxLoad, car.EngineLimiter)
 	// File timestamps are UnixNano (sleepDelta depends on that). Frame.ts is UnixMilli, same as live.
-	publishCar(sm, broadcaster, car, source, rec.Timestamp/int64(time.Millisecond), carName)
+	publishCar(sm, broadcaster, car, source, rec.Timestamp/int64(time.Millisecond), carName, driverName)
 }
 
 func sleepDelta(ctx context.Context, prev, now int64, replayRate float64) error {

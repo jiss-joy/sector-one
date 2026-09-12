@@ -1,9 +1,10 @@
-import { pushFrame, setConnection } from "@/lib/store";
+import { pushFrame, resetCompletedLaps, setConnection } from "@/lib/store";
 import type { Frame } from "@/lib/types";
 
 export const ENGINE = "http://127.0.0.1:8080";
 
 export function connectEngine(): () => void {
+  resetCompletedLaps();
   const eventSource = new EventSource(`${ENGINE}/api/telemetry`);
 
   eventSource.onopen = () => {
@@ -30,6 +31,7 @@ export function connectEngine(): () => void {
   return () => {
     eventSource.close();
     window.clearInterval(poll);
+    resetCompletedLaps();
     setConnection({ state: "offline", subscribers: 0 });
   };
 }
