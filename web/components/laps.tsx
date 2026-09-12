@@ -24,7 +24,10 @@ export function Laps() {
     if (f) {
       if (timeRef.current) timeRef.current.textContent = formatLap(f.lap_time_ms);
       if (bestRef.current) bestRef.current.textContent = formatLap(f.best_lap_ms);
-      if (pitRef.current) pitRef.current.dataset.active = f.in_pit ? "1" : "0";
+      if (pitRef.current) {
+        pitRef.current.hidden = !f.in_pit;
+        pitRef.current.dataset.active = f.in_pit ? "1" : "0";
+      }
     }
 
     const laps = getCompletedLaps();
@@ -50,7 +53,10 @@ export function Laps() {
     <div className="flex flex-col gap-3">
       <div className="flex items-end justify-between gap-3 px-0.5">
         <div>
-          <span className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Current</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Current</span>
+            <Light ref={pitRef} label="PIT" />
+          </div>
           <div ref={timeRef} className="font-mono text-xl tabular-nums text-white">
             --:--.---
           </div>
@@ -61,7 +67,6 @@ export function Laps() {
             --:--.---
           </div>
         </div>
-        <Light ref={pitRef} label="PIT" />
       </div>
 
       <table className="w-full border-collapse text-left">
@@ -133,8 +138,9 @@ function Light({
   return (
     <span
       ref={ref}
+      hidden
       data-active="0"
-      className="inline-flex h-5 items-center rounded-full border border-border px-2 text-[10px] font-medium tracking-wide data-[active=1]:border-amber-400 data-[active=1]:bg-amber-400/20 data-[active=1]:text-amber-200"
+      className="inline-flex h-5 items-center rounded-full border border-amber-400 bg-amber-400/20 px-2 text-[10px] font-medium tracking-wide text-amber-200"
     >
       {label}
     </span>
