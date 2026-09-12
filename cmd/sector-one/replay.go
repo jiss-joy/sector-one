@@ -84,7 +84,8 @@ func handleKindCarInfo(payload []byte, sm *physics.SpecManager, broadcaster *str
 	}
 	source := "replay"
 	sm.Update(carName, car.EngineRPM, maxLoad, car.EngineLimiter)
-	publishCar(sm, broadcaster, car, source, rec.Timestamp, carName)
+	// File timestamps are UnixNano (sleepDelta depends on that). Frame.ts is UnixMilli, same as live.
+	publishCar(sm, broadcaster, car, source, rec.Timestamp/int64(time.Millisecond), carName)
 }
 
 func sleepDelta(ctx context.Context, prev, now int64, replayRate float64) error {

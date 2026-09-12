@@ -46,6 +46,7 @@ func main() {
 			if err != nil {
 				log.Println("Error finding file", err)
 			}
+			cancel()
 			return
 		}
 
