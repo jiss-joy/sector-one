@@ -148,4 +148,4 @@ Push to `main` runs [`.github/workflows/release-windows.yml`](.github/workflows/
 
 ## License
 
-No license file yet. Treat the repo as source-available for reading until one is added. You do not get a right to redistribute the game or its assets.
+[MIT](LICENSE). That covers this repo only. You do not get a right to redistribute Assetto Corsa or its assets.
